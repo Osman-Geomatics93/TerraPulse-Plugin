@@ -485,7 +485,9 @@ class TestCDSEDownloader:
 
         dl = CDSEDownloader()
         existing = tmp_output_dir / "existing_scene.zip"
-        existing.write_bytes(b"fake zip content")
+        # Must start with ZIP magic bytes (PK\x03\x04) so _is_valid_zip() passes
+        # and the cached-file skip path is taken.
+        existing.write_bytes(b"PK\x03\x04" + b"\x00" * 64)
 
         with patch("requests.get") as mock_get:
             result = dl.download_scene(
