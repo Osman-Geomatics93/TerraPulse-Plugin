@@ -20,7 +20,7 @@ QGIS_MAX_VERSION: str = "3.99"
 PYTHON_MIN_VERSION: str = "3.11"
 
 #: Default Docker image for local processing
-DEFAULT_DOCKER_IMAGE: str = "terrapulse-pygmtsar:latest"
+DEFAULT_DOCKER_IMAGE: str = "osmanos93/terrapulse-pygmtsar:latest"
 
 #: STAC extension URL for TerraPulse custom properties
 STAC_EXTENSION_URL: str = (

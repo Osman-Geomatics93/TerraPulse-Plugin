@@ -117,7 +117,7 @@ class EngineIPCClient:
 
     Usage (from InSARTask.run())::
 
-        client = EngineIPCClient(docker_image="terrapulse-pygmtsar:latest")
+        client = EngineIPCClient(docker_image="osmanos93/terrapulse-pygmtsar:latest")
         result = client.run(
             aoi_wkt="POLYGON(...)",
             start_date=datetime(2023, 1, 1),
@@ -136,7 +136,7 @@ class EngineIPCClient:
 
     def __init__(
         self,
-        docker_image: str = "terrapulse-pygmtsar:latest",
+        docker_image: str = "osmanos93/terrapulse-pygmtsar:latest",
         engine_script: str = "/home/terrapulse/engine_server.py",
     ) -> None:
         self._image = docker_image

@@ -12,7 +12,7 @@ Protocol:
   stdout → {"type":"error","data":{...}} on failure (then exit 1)
 
 Run inside Docker:
-  docker run --rm -i -v /host/output:/output terrapulse-pygmtsar:latest \
+  docker run --rm -i -v /host/output:/output osmanos93/terrapulse-pygmtsar:latest \
       python /home/terrapulse/engine_server.py
 
 NEVER call this script directly in the QGIS plugin process.
