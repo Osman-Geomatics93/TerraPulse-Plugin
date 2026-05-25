@@ -4,7 +4,7 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
 version=0.2.0
-author=Mohamed Fawzy (Osman-Geomatics93)
+author=OSMAN IBRAHIM
 email=mohamed.fawzy98@hotmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
     select a time window, and receive an interpreted deformation map with risk attribution —
