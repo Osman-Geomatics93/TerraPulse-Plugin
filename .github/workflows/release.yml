@@ -3,7 +3,7 @@ name: Release QGIS Plugin
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "[0-9]*.[0-9]*.[0-9]*"   # matches 0.2.0, 1.0.0-rc1, etc. (no v prefix)
 
 jobs:
   release:
@@ -16,11 +16,11 @@ jobs:
       - uses: actions/checkout@v4
 
       # ----------------------------------------------------------------
-      # 1. Extract version from tag (e.g. v0.2.0 → 0.2.0)
+      # 1. Extract version from tag (tag IS the version, e.g. 0.2.0)
       # ----------------------------------------------------------------
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       # ----------------------------------------------------------------
       # 2. Version consistency checks
@@ -96,11 +96,13 @@ jobs:
 
       # ----------------------------------------------------------------
       # 6. Publish GitHub Release
+      #    Tag format: 0.2.0  (no "v" prefix — required by qgis-plugin-ci)
+      #    Display name: "TerraPulse v0.2.0" (human-friendly with v)
       # ----------------------------------------------------------------
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ steps.version.outputs.VERSION }}"
+          tag_name: "${{ steps.version.outputs.VERSION }}"
           name: "TerraPulse v${{ steps.version.outputs.VERSION }}"
           draft: false
           prerelease: ${{ contains(steps.version.outputs.VERSION, 'rc') || contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') }}
@@ -137,17 +139,54 @@ jobs:
 
       # ----------------------------------------------------------------
       # 7. Publish to official QGIS Plugin Repository
-      #    Uses qgis-plugin-ci which handles OSGeo CAS + Basic Auth
-      #    correctly.  We pass the EXISTING zip built in step 3 and
-      #    skip GitHub-release creation (softprops handled that already).
+      #    qgis-plugin-ci release VERSION looks for a GitHub release
+      #    whose tag equals VERSION exactly (0.2.0) — that's why tags
+      #    must NOT have a "v" prefix.
       #    Runs only when OSGEO_USERNAME + OSGEO_PASSWORD secrets are set.
       #    Skipped on pre-release tags (rc / alpha / beta).
       #
-      #    To enable: add these two secrets in
-      #    GitHub → Settings → Secrets and variables → Actions:
+      #    Secrets: GitHub → Settings → Secrets → Actions:
       #      OSGEO_USERNAME   — your OSGeo ID (https://www.osgeo.org)
       #      OSGEO_PASSWORD   — your OSGeo password
       # ----------------------------------------------------------------
+      - name: Install qgis-plugin-ci
+        if: |
+          env.OSGEO_USERNAME != '' &&
+          !contains(steps.version.outputs.VERSION, 'rc') &&
+          !contains(steps.version.outputs.VERSION, 'alpha') &&
+          !contains(steps.version.outputs.VERSION, 'beta')
+        env:
+          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
+        run: pip install qgis-plugin-ci --quiet
+
+      - name: Show qgis-plugin-ci upload URL (diagnostic)
+        if: |
+          env.OSGEO_USERNAME != '' &&
+          !contains(steps.version.outputs.VERSION, 'rc') &&
+          !contains(steps.version.outputs.VERSION, 'alpha') &&
+          !contains(steps.version.outputs.VERSION, 'beta')
+        env:
+          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
+        run: |
+          python3 - << 'PYEOF'
+          import importlib, pkgutil, inspect, sys
+          try:
+              import qgis_plugin_ci
+              base = qgis_plugin_ci.__path__[0]
+              for finder, name, ispkg in pkgutil.walk_packages([base], prefix="qgis_plugin_ci."):
+                  try:
+                      mod = importlib.import_module(name)
+                      src = inspect.getsource(mod)
+                      for line in src.splitlines():
+                          l = line.strip()
+                          if ("qgis.org" in l or "hub.qgis" in l) and ("http" in l or "url" in l.lower()):
+                              print(f"[{name}]  {l}")
+                  except Exception:
+                      pass
+          except Exception as e:
+              print(f"diagnostic error: {e}", file=sys.stderr)
+          PYEOF
+
       - name: Publish to QGIS Plugin Repository
         if: |
           env.OSGEO_USERNAME != '' &&
@@ -157,56 +196,13 @@ jobs:
         env:
           OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
           OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install requests --quiet
-          python3 << 'PYEOF'
-          import os, sys, requests
-
-          username = os.environ["OSGEO_USERNAME"]
-          password = os.environ["OSGEO_PASSWORD"]
-          zip_name = os.environ["ZIP_NAME"]
-
-          # plugins.qgis.org REST API uses HTTP Basic Auth.
-          # The endpoint may issue a 301 redirect (nginx URL normalisation).
-          # We follow redirects manually so the POST body is never dropped.
-
-          AUTH = (username, password)
-          initial_url = "https://plugins.qgis.org/api/v1/plugins/add/"
-
-          # ── 1. Probe with HEAD to find the final URL (follows 301 safely) ──
-          print(f"→ Probing endpoint…")
-          probe = requests.head(initial_url, auth=AUTH, allow_redirects=True, timeout=30)
-          final_url = probe.url          # requests sets .url to the final URL
-          print(f"   Final upload URL: {final_url}")
-
-          # ── 2. POST the plugin zip directly to the final URL ────────────────
-          print(f"→ Uploading {zip_name} as {username}…")
-          with open(zip_name, "rb") as fh:
-              r = requests.post(
-                  final_url,
-                  files={"package": (zip_name, fh, "application/zip")},
-                  auth=AUTH,
-                  allow_redirects=False,   # we already resolved redirects above
-                  timeout=300,
-              )
-
-          print(f"   HTTP {r.status_code}")
-          if r.text:
-              print(r.text[:600])
-
-          if r.status_code in (200, 201):
-              print("✓ Plugin published to https://plugins.qgis.org/plugins/terrapulse/")
-              sys.exit(0)
-          elif r.status_code == 302:
-              loc = r.headers.get("Location", "?")
-              print(f"✓ Accepted — server redirect → {loc}")
-              print("✓ Plugin pending review at https://plugins.qgis.org/plugins/terrapulse/")
-              sys.exit(0)
-          elif r.status_code == 403:
-              print("::error::403 Forbidden — check OSGEO_USERNAME / OSGEO_PASSWORD secrets",
-                    file=sys.stderr)
-              sys.exit(1)
-          else:
-              print(f"::error::Upload failed: HTTP {r.status_code}", file=sys.stderr)
-              sys.exit(1)
-          PYEOF
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          echo "→ Publishing TerraPulse ${VERSION} to plugins.qgis.org…"
+          qgis-plugin-ci release "${VERSION}" \
+            --github-token "${GITHUB_TOKEN}" \
+            --osgeo-username "${OSGEO_USERNAME}" \
+            --osgeo-password "${OSGEO_PASSWORD}" \
+            2>&1
+          echo "✓ Submitted to https://plugins.qgis.org/plugins/terrapulse/"
