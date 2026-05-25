@@ -11,10 +11,12 @@ Design rule: no engine import should appear in QGIS plugin code.
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 ProgressCallback = Callable[["ProcessingProgress"], None]
 

@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Iterator
+from typing import TYPE_CHECKING
 
-import pystac
 import pystac_client
 
-from terrapulse_core.stac.models import BBox, SentinelScene, SceneStack
+from terrapulse_core.stac.models import BBox, SceneStack, SentinelScene
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    import pystac
 
 logger = logging.getLogger(__name__)
 

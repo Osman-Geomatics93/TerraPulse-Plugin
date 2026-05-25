@@ -69,7 +69,7 @@ class DeformationClassifier:
         self._model = model
 
     @classmethod
-    def load(cls, model_path: Path | None = None) -> "DeformationClassifier":
+    def load(cls, model_path: Path | None = None) -> DeformationClassifier:
         """
         Load a pre-trained classifier from disk.
 

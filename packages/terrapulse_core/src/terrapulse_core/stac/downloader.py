@@ -31,12 +31,15 @@ import logging
 import shutil
 import threading
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import requests
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

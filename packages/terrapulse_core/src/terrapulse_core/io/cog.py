@@ -19,7 +19,6 @@ import numpy as np
 import rasterio
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
-from rasterio.transform import from_bounds
 from rasterio.windows import from_bounds as window_from_bounds
 
 if TYPE_CHECKING:
@@ -66,7 +65,7 @@ class COGWriter:
         data: np.ndarray,
         output_path: Path,
         crs: str | CRS,
-        transform: "Affine",
+        transform: Affine,
         nodata: float | None = None,
         band_names: list[str] | None = None,
     ) -> Path:
@@ -171,7 +170,7 @@ def read_cog_window(
     target_crs: str = "EPSG:4326",
     overview_level: int | None = None,
     bands: list[int] | None = None,
-) -> tuple[np.ndarray, "Affine"]:
+) -> tuple[np.ndarray, Affine]:
     """
     Stream a spatial window from a COG without loading the full file.
 

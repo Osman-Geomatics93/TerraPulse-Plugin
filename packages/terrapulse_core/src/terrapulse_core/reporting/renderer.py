@@ -18,7 +18,7 @@ from __future__ import annotations
 import base64
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -44,7 +44,7 @@ class ReportConfig:
     include_interactive_charts: bool = False   # requires CDN access in viewer
     generate_pdf: bool = False                 # requires weasyprint
     generate_html: bool = True
-    llm_client: "LLMNarrativeClient | None" = None
+    llm_client: LLMNarrativeClient | None = None
     run_id: str = ""
     engine_name: str = "pygmtsar"
     processing_mode: str = "standard"
@@ -79,8 +79,8 @@ class ReportRenderer:
 
     def render(
         self,
-        narrative_context: "NarrativeContext",
-        ranking_result: "RankingResult",
+        narrative_context: NarrativeContext,
+        ranking_result: RankingResult,
         velocity_png: Path | None = None,
         classification_png: Path | None = None,
     ) -> ReportOutput:
@@ -116,7 +116,11 @@ class ReportRenderer:
 
         # ---- 3. Render Jinja2 template ----
         try:
-            from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore[import]
+            from jinja2 import (  # type: ignore[import]
+                Environment,
+                FileSystemLoader,
+                select_autoescape,
+            )
         except ImportError as exc:
             raise ImportError("jinja2 is required for ReportRenderer") from exc
 
@@ -132,7 +136,7 @@ class ReportRenderer:
             warnings.append(f"Template {template_name!r} not found, using plain fallback: {exc}")
             template = env.get_template("report_plain.html.j2")
 
-        generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
         html_str = template.render(
             title=self._config.title,
@@ -183,7 +187,7 @@ class ReportRenderer:
 
     def _generate_narrative(
         self,
-        ctx: "NarrativeContext",
+        ctx: NarrativeContext,
         warnings: list[str],
     ) -> tuple[str, str]:
         """Return (summary_text, recommendations_text) from LLM or template."""

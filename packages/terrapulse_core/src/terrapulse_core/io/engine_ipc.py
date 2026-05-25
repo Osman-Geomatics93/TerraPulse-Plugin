@@ -31,10 +31,13 @@ import shutil
 import subprocess
 import sys
 import threading
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Callable, Iterator, Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +98,7 @@ class IPCMessage:
         return json.dumps({"type": self.type, "data": self.data})
 
     @classmethod
-    def from_json(cls, raw: str) -> "IPCMessage":
+    def from_json(cls, raw: str) -> IPCMessage:
         parsed = json.loads(raw)
         return cls(
             type=parsed["type"],  # type: ignore[arg-type]

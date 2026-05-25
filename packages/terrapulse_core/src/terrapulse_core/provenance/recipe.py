@@ -15,11 +15,13 @@ import hashlib
 import logging
 import platform
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Literal
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Literal
 
 import yaml
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ class RunRecipe:
     run_id: str                      # UUID4
     status: Literal["planned", "running", "completed", "failed"] = "planned"
     created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     completed_at: str = ""
 

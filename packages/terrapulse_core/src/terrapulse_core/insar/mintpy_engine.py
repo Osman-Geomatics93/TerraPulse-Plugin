@@ -10,15 +10,16 @@ MintPy docs: https://mintpy.readthedocs.io/
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from terrapulse_core.insar.base import (
     BaseInSAREngine,
     EngineResult,
-    ProcessingProgress,
     ProgressCallback,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

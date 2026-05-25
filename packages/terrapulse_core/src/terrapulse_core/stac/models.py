@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, model_validator
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class BBox(BaseModel):
@@ -18,7 +20,7 @@ class BBox(BaseModel):
     north: float = Field(..., ge=-90, le=90)
 
     @model_validator(mode="after")
-    def _check_bounds(self) -> "BBox":
+    def _check_bounds(self) -> BBox:
         if self.west >= self.east:
             raise ValueError("west must be < east")
         if self.south >= self.north:

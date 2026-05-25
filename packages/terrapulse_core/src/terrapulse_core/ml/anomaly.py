@@ -55,7 +55,7 @@ class AnomalyDetector:
     # Public API
     # ------------------------------------------------------------------
 
-    def fit(self, features: np.ndarray) -> "AnomalyDetector":
+    def fit(self, features: np.ndarray) -> AnomalyDetector:
         """
         Fit the IsolationForest on the feature matrix.
 

@@ -14,9 +14,10 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from terrapulse_core.stac.models import BBox
+if TYPE_CHECKING:
+    from terrapulse_core.stac.models import BBox
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +84,8 @@ class OSMQuerier:
             If ``overpy`` or ``geopandas`` are not installed.
         """
         try:
-            import overpy  # type: ignore[import]
             import geopandas as gpd  # type: ignore[import]
+            import overpy  # type: ignore[import]
             from shapely.geometry import LineString, Point, Polygon  # type: ignore[import]
         except ImportError as exc:
             raise ImportError(

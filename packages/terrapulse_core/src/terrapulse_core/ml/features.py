@@ -40,10 +40,10 @@ FEATURE_NAMES = [
 
 
 def extract_features(
-    velocity_ts: "xr.DataArray | np.ndarray",  # (time, y, x) displacement in mm
-    coherence: "xr.DataArray | np.ndarray",    # (y, x) coherence [0, 1]
-    dem_slope: "xr.DataArray | np.ndarray",    # (y, x) slope in degrees
-    dem_aspect: "xr.DataArray | np.ndarray",   # (y, x) aspect in degrees [0, 360)
+    velocity_ts: xr.DataArray | np.ndarray,  # (time, y, x) displacement in mm
+    coherence: xr.DataArray | np.ndarray,    # (y, x) coherence [0, 1]
+    dem_slope: xr.DataArray | np.ndarray,    # (y, x) slope in degrees
+    dem_aspect: xr.DataArray | np.ndarray,   # (y, x) aspect in degrees [0, 360)
 ) -> np.ndarray:
     """
     Extract the 6-feature matrix from InSAR outputs.
@@ -181,10 +181,10 @@ def extract_features(
 
 
 def pixel_valid_mask(
-    velocity_ts: "xr.DataArray | np.ndarray",
-    coherence: "xr.DataArray | np.ndarray",
-    dem_slope: "xr.DataArray | np.ndarray",
-    dem_aspect: "xr.DataArray | np.ndarray",
+    velocity_ts: xr.DataArray | np.ndarray,
+    coherence: xr.DataArray | np.ndarray,
+    dem_slope: xr.DataArray | np.ndarray,
+    dem_aspect: xr.DataArray | np.ndarray,
 ) -> np.ndarray:
     """
     Return the flat boolean mask of valid pixels used by ``extract_features``.

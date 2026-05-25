@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -44,8 +44,8 @@ class STACItemWriter:
 
     def write(
         self,
-        recipe: "RunRecipe",
-        aoi: "BBox",
+        recipe: RunRecipe,
+        aoi: BBox,
         output_dir: Path,
     ) -> Path:
         """
@@ -93,12 +93,12 @@ class STACItemWriter:
 
     def _build_item_dict(
         self,
-        recipe: "RunRecipe",
-        aoi: "BBox",
+        recipe: RunRecipe,
+        aoi: BBox,
         output_dir: Path,
     ) -> dict[str, Any]:
         """Build the STAC 1.0 item as a plain dict (no pystac dependency)."""
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
         # GeoJSON polygon for the AOI
         geometry = {

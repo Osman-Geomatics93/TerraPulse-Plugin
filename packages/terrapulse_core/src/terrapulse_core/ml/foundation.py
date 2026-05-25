@@ -15,7 +15,10 @@ Phase 0 stub — implementation in Phase 2.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +29,8 @@ PRITHVI_EXPECTED_SHA256 = ""  # filled in Phase 2 after pinning weights version
 def is_foundation_model_available() -> bool:
     """Return True if torch and huggingface_hub are importable."""
     try:
-        import torch  # noqa: F401  # type: ignore[import]
         import huggingface_hub  # noqa: F401  # type: ignore[import]
+        import torch  # noqa: F401  # type: ignore[import]
 
         return True
     except ImportError:

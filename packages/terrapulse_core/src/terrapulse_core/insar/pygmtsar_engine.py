@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from terrapulse_core.insar.base import (
     BaseInSAREngine,
@@ -20,6 +19,9 @@ from terrapulse_core.insar.base import (
     ProcessingProgress,
     ProgressCallback,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

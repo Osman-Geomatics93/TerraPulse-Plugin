@@ -18,16 +18,19 @@ from __future__ import annotations
 
 import logging
 import pickle
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
+from terrapulse_core.ml.anomaly import AnomalyDetector
 from terrapulse_core.ml.classifier import (
+    _DEFAULT_MODEL_PATH,
     DeformationClass,
     DeformationClassifier,
-    _DEFAULT_MODEL_PATH,
 )
-from terrapulse_core.ml.anomaly import AnomalyDetector
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

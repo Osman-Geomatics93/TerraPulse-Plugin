@@ -6,14 +6,14 @@ a Docker container, a conda environment, or any plain Python 3.11+ env.
 """
 
 from terrapulse_core.__version__ import (
-    __version__,
-    QGIS_MIN_VERSION,
-    QGIS_MAX_VERSION,
-    PYTHON_MIN_VERSION,
     DEFAULT_DOCKER_IMAGE,
-    STAC_EXTENSION_URL,
-    RISK_V_MAX,
     N_ML_FEATURES,
+    PYTHON_MIN_VERSION,
+    QGIS_MAX_VERSION,
+    QGIS_MIN_VERSION,
+    RISK_V_MAX,
+    STAC_EXTENSION_URL,
+    __version__,
 )
 
 __all__ = [
