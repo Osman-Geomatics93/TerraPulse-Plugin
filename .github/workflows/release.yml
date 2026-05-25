@@ -150,23 +150,20 @@ jobs:
       #      OSGEO_PASSWORD   — your OSGeo password
       # ----------------------------------------------------------------
       - name: Remove stale plugin zip from release (allow re-runs)
-        if: |
-          env.OSGEO_USERNAME != '' &&
-          !contains(steps.version.outputs.VERSION, 'rc') &&
-          !contains(steps.version.outputs.VERSION, 'alpha') &&
-          !contains(steps.version.outputs.VERSION, 'beta')
+        # Always run — safe even if the asset doesn't exist (|| true).
+        # qgis-plugin-ci uploads terrapulse.<ver>.zip to the GitHub release.
+        # On a re-run GitHub returns 422 "already_exists"; delete it first.
+        # NOTE: no OSGEO env var here, so no env.OSGEO_USERNAME guard —
+        # the guard lives on the install + publish steps that follow.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # qgis-plugin-ci uploads terrapulse.<ver>.zip; if a prior run
-          # already uploaded it, GitHub returns 422 "already_exists".
-          # Delete it first so qgis-plugin-ci can always re-upload.
           VERSION="${{ steps.version.outputs.VERSION }}"
           ASSET="terrapulse.${VERSION}.zip"
           echo "→ Removing ${ASSET} from release ${VERSION} (if present)…"
           gh release delete-asset "${VERSION}" "${ASSET}" \
-            --yes --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
-          echo "✓ Ready"
+            --yes --repo "$GITHUB_REPOSITORY" 2>/dev/null && \
+            echo "   deleted" || echo "   not present (OK)"
 
       - name: Install qgis-plugin-ci
         if: |
