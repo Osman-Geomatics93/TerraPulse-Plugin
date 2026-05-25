@@ -13,6 +13,7 @@ ignore = [
     "ANN102",  # removed rule
     "ANN401",  # Any is intentional in ML model wrappers and OSM type-erased returns
     "E501",    # line-length enforced by formatter, not linter
+    "TC003",   # moving stdlib imports into TYPE_CHECKING breaks Pydantic runtime resolution
 ]
 
 [tool.mypy]

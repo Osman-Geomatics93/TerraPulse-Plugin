@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Literal
+from datetime import datetime  # noqa: TC003 — Pydantic resolves field types at runtime
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 class BBox(BaseModel):
