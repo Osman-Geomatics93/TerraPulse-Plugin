@@ -36,7 +36,9 @@ jobs:
 
       - name: Install terrapulse_core + dev deps
         working-directory: packages/terrapulse_core
-        run: uv pip install --system ".[dev]"
+        # --python forces uv to use the version we just installed, not the
+        # system Python (3.10 on ubuntu-22.04) which doesn't satisfy >=3.11.
+        run: uv pip install --python ${{ matrix.python-version }} ".[dev]"
 
       - name: Run ruff linter
         run: uv run --python ${{ matrix.python-version }} ruff check packages/terrapulse_core/src
@@ -47,6 +49,7 @@ jobs:
 
       - name: Run pytest
         working-directory: packages/terrapulse_core
+        shell: bash   # force bash so \ line-continuation works on Windows runners
         run: |
           uv run --python ${{ matrix.python-version }} pytest \
             --cov=terrapulse_core \
