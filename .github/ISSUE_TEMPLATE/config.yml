@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions — questions and ideas
+    url: https://github.com/Osman-Geomatics93/TerraPulse-Plugin/discussions
+    about: Ask questions, share workflows, propose features before opening a formal issue.
+  - name: Security advisories
+    url: https://github.com/Osman-Geomatics93/TerraPulse-Plugin/security/advisories/new
+    about: Report a vulnerability privately (please do not file public issues for security problems).
+  - name: QGIS Plugin Repository listing
+    url: https://plugins.qgis.org/plugins/terrapulse/
+    about: Browse releases, ratings, and download counts on the official QGIS plugin index.
+  - name: Documentation
+    url: https://github.com/Osman-Geomatics93/TerraPulse-Plugin#readme
+    about: Read the README, installation guide, and FAQ before opening an issue.

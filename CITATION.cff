@@ -1,0 +1,37 @@
+cff-version: "1.2.0"
+message: >-
+  If you use TerraPulse in your research or work, please cite it using
+  the metadata below.
+type: software
+title: >-
+  TerraPulse: AI-powered ground deformation and subsidence intelligence
+  for QGIS
+version: "0.2.3"
+date-released: "2026-05-26"
+license: GPL-2.0
+url: "https://plugins.qgis.org/plugins/terrapulse/"
+repository-code: "https://github.com/Osman-Geomatics93/TerraPulse-Plugin"
+authors:
+  - family-names: Ibrahim
+    given-names: Osman
+    email: mohamed.fawzy98@hotmail.com
+keywords:
+  - insar
+  - sar
+  - sentinel-1
+  - qgis
+  - ground deformation
+  - subsidence
+  - geohazard
+  - machine learning
+  - remote sensing
+  - copernicus
+abstract: >-
+  TerraPulse is an open-source QGIS plugin that automates Sentinel-1
+  InSAR processing for ground deformation and subsidence mapping.
+  It integrates PyGMTSAR for interferometric analysis, machine-learning
+  classifiers for deformation-pattern recognition, and a risk-scoring
+  engine for geohazard assessment. The plugin runs the heavy computation
+  inside a containerised Docker environment (osmanos93/terrapulse-pygmtsar)
+  so that analysts can produce displacement maps, time-series plots, and
+  exportable PDF reports directly from the QGIS interface.

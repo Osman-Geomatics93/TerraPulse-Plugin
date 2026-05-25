@@ -1,0 +1,138 @@
+name: Bug report
+description: Report a problem so it can be fixed
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        Before opening, please:
+        - Search [existing issues](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/issues?q=is%3Aissue)
+        - Confirm the bug reproduces on the latest released version
+        - For security issues, see [SECURITY.md](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/blob/main/SECURITY.md) instead
+
+  - type: input
+    id: terrapulse-version
+    attributes:
+      label: TerraPulse version
+      description: From `Plugins → Manage and Install Plugins → Installed`
+      placeholder: "0.2.3"
+    validations:
+      required: true
+
+  - type: input
+    id: qgis-version
+    attributes:
+      label: QGIS version
+      description: From `Help → About`
+      placeholder: "3.34.1 Prizren"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 10
+        - Windows 11
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Ubuntu / Debian
+        - Fedora / RHEL
+        - Other Linux
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Run `python --version` in the QGIS Python Console
+      placeholder: "3.11.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: docker-running
+    attributes:
+      label: Docker engine status
+      description: Is Docker Desktop installed and running?
+      options:
+        - "Yes — Docker Desktop is running"
+        - "Yes — Docker daemon is running (Linux)"
+        - "No — Docker is not installed"
+        - "Not sure"
+        - "Not relevant to this bug"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that reliably trigger the issue. Include AOI coordinates and date range if relevant.
+      placeholder: |
+        1. Open QGIS, enable TerraPulse
+        2. Draw AOI over Cairo (~30.05N, 31.25E, 5 km radius)
+        3. Set time window: 2023-01-01 to 2023-06-30
+        4. Click Run
+        5. Crash at ~16% progress
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include screenshots if helpful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Logs / traceback
+      description: |
+        Paste the full traceback from the QGIS Python Console
+        (`Plugins → Python Console`) and any output from `docker logs`.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Anything else that might help — proxy settings, network restrictions, custom Docker image, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I agree to follow this project's [Code of Conduct](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/blob/main/CODE_OF_CONDUCT.md)
+          required: true
