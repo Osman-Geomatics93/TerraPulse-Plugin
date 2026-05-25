@@ -1,4 +1,4 @@
-[general]
+﻿[general]
 name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
@@ -44,7 +44,7 @@ hasProcessingProvider=False
 
 changelog=
     0.2.0 (2026-05-25)
-    - Fixed download crash at ~16% progress (pipe deadlock + double disk usage)
+    - Fixed download crash at ~16 pct progress (pipe deadlock + double disk usage)
     - Parallel HTTP Range download for 4x faster Sentinel-1 SLC acquisition
     - Full IPC pipeline (Docker subprocess JSON protocol)
     - PyGMTSAR engine server, CDSE OAuth2 downloader, COG writer
