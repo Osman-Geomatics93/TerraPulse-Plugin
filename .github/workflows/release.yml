@@ -137,6 +137,7 @@ jobs:
 
       # ----------------------------------------------------------------
       # 7. Publish to official QGIS Plugin Repository
+      #    Uses the plugins.qgis.org REST API directly (no qgis-plugin-ci).
       #    Runs only when OSGEO_USERNAME + OSGEO_PASSWORD secrets are set.
       #    Skipped on pre-release tags (rc / alpha / beta).
       #
@@ -145,16 +146,6 @@ jobs:
       #      OSGEO_USERNAME   — your OSGeo ID (https://www.osgeo.org)
       #      OSGEO_PASSWORD   — your OSGeo password
       # ----------------------------------------------------------------
-      - name: Install qgis-plugin-ci
-        if: |
-          env.OSGEO_USERNAME != '' &&
-          !contains(steps.version.outputs.VERSION, 'rc') &&
-          !contains(steps.version.outputs.VERSION, 'alpha') &&
-          !contains(steps.version.outputs.VERSION, 'beta')
-        env:
-          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
-        run: pip install qgis-plugin-ci --quiet
-
       - name: Publish to QGIS Plugin Repository
         if: |
           env.OSGEO_USERNAME != '' &&
@@ -164,10 +155,20 @@ jobs:
         env:
           OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
           OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          qgis-plugin-ci release "${{ steps.version.outputs.VERSION }}" \
-            --github-token "$GITHUB_TOKEN" \
-            --osgeo-username "$OSGEO_USERNAME" \
-            --osgeo-password "$OSGEO_PASSWORD"
-          echo "✓ Published to https://plugins.qgis.org/plugins/terrapulse/"
+          echo "Uploading ${ZIP_NAME} to plugins.qgis.org…"
+          HTTP_CODE=$(curl --silent \
+            --output /tmp/qgis_response.json \
+            --write-out "%{http_code}" \
+            --form "package=@${ZIP_NAME}" \
+            --user "${OSGEO_USERNAME}:${OSGEO_PASSWORD}" \
+            "https://plugins.qgis.org/api/v1/plugins/add/")
+          echo "--- API response (HTTP ${HTTP_CODE}) ---"
+          cat /tmp/qgis_response.json || true
+          echo ""
+          if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Plugin published to https://plugins.qgis.org/plugins/terrapulse/"
+          else
+            echo "::error::Upload failed with HTTP ${HTTP_CODE} — check the response above"
+            exit 1
+          fi
