@@ -22,10 +22,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from terrapulse_core.insar.base import ProcessingProgress
 
 # Configure logging to stderr so it doesn't pollute the stdout IPC channel
 logging.basicConfig(
@@ -101,7 +104,6 @@ def handle_run(data: dict[str, object]) -> None:
 
     try:
         from terrapulse_core.stac.client import STACClient
-        from terrapulse_core.stac.models import BBox
 
         # Extract BBox from WKT (simple approach: parse first/last coords)
         aoi_bbox = _wkt_to_bbox(aoi_wkt)
@@ -131,7 +133,7 @@ def handle_run(data: dict[str, object]) -> None:
     token: str | None = None
     if cdse_username and cdse_password:
         try:
-            from terrapulse_core.stac.downloader import CDSEAuth, CDSEAuthError
+            from terrapulse_core.stac.downloader import CDSEAuth
 
             auth = CDSEAuth(username=cdse_username, password=cdse_password)
             token = auth.get_token()
@@ -189,17 +191,31 @@ def handle_run(data: dict[str, object]) -> None:
             )
             continue
 
-        def _dl_progress(done: int, total: int, _i: int = i) -> None:
-            if total > 0:
-                sub_pct = (done / total) * (dl_range_pct / n_scenes)
-                overall = dl_base_pct + (_i / n_scenes) * dl_range_pct + sub_pct
-                _emit_progress(
-                    "download",
-                    min(overall, dl_base_pct + dl_range_pct - 0.1),
-                    f"Scene {_i + 1}/{n_scenes}: {done / 1e6:.0f} / {total / 1e6:.0f} MB",
-                    scene_index=_i + 1,
-                    total_scenes=n_scenes,
-                )
+        # Throttle progress messages: emit at most once per 1% of scene download.
+        # Without throttling a 8 GB scene generates ~2 000 messages at 4 MB/chunk,
+        # which fills the 64 KB pipe buffer and deadlocks the Docker container.
+        _last_scene_pct: list[float] = [-1.0]
+
+        def _dl_progress(
+            done: int, total: int,
+            _i: int = i,
+            _last: list[float] = _last_scene_pct,
+        ) -> None:
+            if total <= 0:
+                return
+            scene_pct_now = done / total * 100.0
+            if scene_pct_now - _last[0] < 1.0:   # emit only on each full 1% step
+                return
+            _last[0] = scene_pct_now
+            sub_pct = (done / total) * (dl_range_pct / n_scenes)
+            overall = dl_base_pct + (_i / n_scenes) * dl_range_pct + sub_pct
+            _emit_progress(
+                "download",
+                min(overall, dl_base_pct + dl_range_pct - 0.1),
+                f"Scene {_i + 1}/{n_scenes}: {done / 1e6:.0f} / {total / 1e6:.0f} MB",
+                scene_index=_i + 1,
+                total_scenes=n_scenes,
+            )
 
         try:
             safe_dir = downloader.download_and_unzip(
@@ -233,7 +249,6 @@ def handle_run(data: dict[str, object]) -> None:
     # ----------------------------------------------------------------
     try:
         from terrapulse_core.insar.pygmtsar_engine import PyGMTSAREngine
-        from terrapulse_core.insar.base import ProcessingProgress
 
         engine = PyGMTSAREngine()
         if not engine.is_available():
@@ -294,7 +309,7 @@ def handle_run(data: dict[str, object]) -> None:
         sys.exit(1)
 
 
-def _wkt_to_bbox(wkt: str) -> "BBox":
+def _wkt_to_bbox(wkt: str) -> Any:  # BBox imported lazily inside the function body
     """
     Parse the bounding box of a WKT polygon string.
 

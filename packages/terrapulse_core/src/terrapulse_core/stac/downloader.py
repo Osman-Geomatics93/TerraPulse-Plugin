@@ -28,18 +28,13 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
-import shutil
-import threading
 import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -349,20 +344,35 @@ class CDSEDownloader:
         progress_cb: DownloadProgressCallback | None,
     ) -> None:
         """
-        Download ``url`` in ``n_threads`` parallel HTTP Range chunks and
-        concatenate them into ``dest``.
+        Download ``url`` in ``n_threads`` parallel HTTP Range chunks, writing
+        each chunk directly into its correct byte offset in ``dest``.
 
-        Each chunk is saved as ``dest.part<N>`` while downloading; on
-        completion they are merged into ``dest`` in order.  Partial chunks
-        are deleted on any error.
+        Unlike the previous approach (temp ``.partN`` files + merge), this
+        method pre-allocates ``dest`` once and each thread writes directly at
+        its own offset, so peak disk usage equals the final file size — not 2×.
+
+        Thread safety: each thread opens its own file descriptor, so concurrent
+        ``seek + write`` operations never interleave.  Progress callbacks are
+        invoked without holding any lock to prevent pipe-buffer deadlocks.
         """
         chunk_size = total_bytes // n_threads
-        part_paths: list[Path] = []
         bytes_done_per = [0] * n_threads
-        lock = threading.Lock()
         errors: list[Exception] = []
 
-        def _fetch(idx: int, start: int, end: int, part: Path) -> None:
+        # Pre-allocate the output file to its final size.
+        # This fails fast (with a clear message) if there is insufficient disk
+        # space, rather than crashing mid-download with an obscure OSError.
+        try:
+            with open(dest, "wb") as f:
+                f.seek(total_bytes - 1)
+                f.write(b"\x00")
+        except OSError as exc:
+            raise CDSEDownloadError(
+                f"Cannot pre-allocate {total_bytes / 1e9:.1f} GB for download — "
+                f"disk may be full: {exc}"
+            ) from exc
+
+        def _fetch(idx: int, start: int, end: int) -> None:
             range_hdr = {"Range": f"bytes={start}-{end}"}
             try:
                 with requests.get(
@@ -370,44 +380,36 @@ class CDSEDownloader:
                     timeout=_DOWNLOAD_TIMEOUT_S,
                 ) as r:
                     r.raise_for_status()
-                    with open(part, "wb") as f:
+                    offset = start
+                    # Each thread uses its own file handle to avoid seek conflicts
+                    with open(dest, "r+b") as f:
+                        f.seek(offset)
                         for data in r.iter_content(chunk_size=_CHUNK_SIZE):
                             if data:
                                 f.write(data)
+                                offset += len(data)
                                 bytes_done_per[idx] += len(data)
                                 if progress_cb:
-                                    with lock:
-                                        progress_cb(
-                                            sum(bytes_done_per), total_bytes
-                                        )
+                                    # No lock — minor over-count is fine for
+                                    # progress display; holding a lock here would
+                                    # cause all threads to block if the pipe is full
+                                    progress_cb(sum(bytes_done_per), total_bytes)
             except Exception as exc:  # noqa: BLE001
                 errors.append(exc)
 
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=n_threads
-        ) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_threads) as executor:
             for i in range(n_threads):
                 start = i * chunk_size
                 end = total_bytes - 1 if i == n_threads - 1 else start + chunk_size - 1
-                part = dest.with_suffix(f".part{i}")
-                part_paths.append(part)
-                executor.submit(_fetch, i, start, end, part)
-            # ThreadPoolExecutor.__exit__ waits for all futures to complete
+                executor.submit(_fetch, i, start, end)
+            # ThreadPoolExecutor.__exit__ joins all futures before returning
 
         if errors:
-            for p in part_paths:
-                if p.exists():
-                    p.unlink()
+            if dest.exists():
+                dest.unlink()
             raise CDSEDownloadError(
                 f"Parallel download failed ({len(errors)} chunk errors): {errors[0]}"
             )
-
-        # Concatenate parts into final file
-        with open(dest, "wb") as out:
-            for p in part_paths:
-                with open(p, "rb") as f:
-                    shutil.copyfileobj(f, out)
-                p.unlink()
 
         logger.debug(
             "Parallel download complete: %d chunks → %s", n_threads, dest.name
