@@ -4,8 +4,8 @@ qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
 version=0.2.0
-author=TerraPulse Contributors
-email=terrapulse@example.com
+author=Mohamed Fawzy (Osman-Geomatics93)
+email=mohamed.fawzy98@hotmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
     select a time window, and receive an interpreted deformation map with risk attribution —
     no SAR or InSAR expertise required. Powered by Sentinel-1 SBAS-InSAR, scikit-learn
@@ -14,20 +14,25 @@ about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Inter
     Features:
     - Draw or import AOI, select time window and processing mode
     - Queries Sentinel-1 SLC stacks from Copernicus Data Space STAC API
-    - Runs InSAR processing locally (Docker/PyGMTSAR) or remotely (OpenEO)
+    - Runs InSAR processing locally via Docker/PyGMTSAR
     - ML pixel classification: stable / linear / seasonal / accelerating / anomalous
-    - OSM infrastructure overlay with risk ranking (buildings, roads, pipelines, critical nodes)
-    - PDF/HTML report with optional AI-written narrative (Anthropic claude-haiku)
+    - OSM infrastructure overlay with risk ranking (buildings, roads, pipelines)
+    - PDF/HTML report with optional AI-written narrative (Anthropic Claude)
     - YAML provenance recipe + STAC 1.0 item for full reproducibility
     - Persistent settings (CDSE credentials, API keys, output directory)
     - Non-blocking background processing via QGIS task manager
-    - 219 automated tests across all modules
 
-tracker=https://github.com/terrapulse/terrapulse/issues
-repository=https://github.com/terrapulse/terrapulse
-homepage=https://terrapulse.readthedocs.io/
+    Requirements:
+    - QGIS 3.34 or later
+    - Python 3.11 or later
+    - Docker Desktop (for local InSAR processing)
+    - Free Copernicus Data Space Ecosystem account (dataspace.copernicus.eu)
 
-tags=InSAR,SAR,Sentinel-1,subsidence,deformation,risk,AI,machine learning,geohazard
+tracker=https://github.com/Osman-Geomatics93/TerraPulse-Plugin/issues
+repository=https://github.com/Osman-Geomatics93/TerraPulse-Plugin
+homepage=https://github.com/Osman-Geomatics93/TerraPulse-Plugin#readme
+
+tags=InSAR,SAR,Sentinel-1,subsidence,deformation,risk,AI,machine learning,geohazard,Copernicus
 
 icon=resources/icons/terrapulse_32.png
 
@@ -39,22 +44,15 @@ hasProcessingProvider=False
 
 changelog=
     0.2.0 (2026-05-25)
-    - Phase 4: Settings persistence (QgsSettings), QGIS status bar integration
-    - Phase 4: Comprehensive README and developer documentation
-    - Phase 4: qgis-plugin-ci release pipeline, GitHub Actions packaging
-    - Phase 3: OSM asset querier (buildings, roads, pipelines, critical nodes)
-    - Phase 3: Risk ranker with composite score formula and type weighting
-    - Phase 3: Jinja2/WeasyPrint HTML+PDF report renderer
-    - Phase 3: STAC 1.0 item writer (hand-crafted, no pystac dependency)
-    - Phase 3: ReportTask and enhanced ResultsDialog with live progress log
-    - Phase 2: RandomForest deformation classifier (5 classes)
-    - Phase 2: IsolationForest anomaly detector
-    - Phase 2: Shannon entropy + confidence + margin uncertainty maps
-    - Phase 2: Synthetic training data generator, model serialisation
-    - Phase 2: ClassifyTask and classification layer loader
-    - Phase 1: Full IPC pipeline (Docker subprocess JSON protocol)
-    - Phase 1: PyGMTSAR engine server, CDSE downloader, COG writer
-    - Phase 1: STACDiscoveryTask and InSARTask background workers
-    - Phase 1: AOI rubber-band map tool, velocity/coherence layer loaders
-    - Phase 0: Plugin loads and unloads cleanly in QGIS 3.34+
-    - Phase 0: Core package skeleton with 219 typed unit tests
+    - Fixed download crash at ~16% progress (pipe deadlock + double disk usage)
+    - Parallel HTTP Range download for 4x faster Sentinel-1 SLC acquisition
+    - Full IPC pipeline (Docker subprocess JSON protocol)
+    - PyGMTSAR engine server, CDSE OAuth2 downloader, COG writer
+    - STACDiscoveryTask and InSARTask background workers
+    - AOI rubber-band map tool, velocity/coherence layer loaders
+    - RandomForest deformation classifier (5 classes: stable/linear/seasonal/accelerating/anomalous)
+    - OSM infrastructure overlay with composite risk score
+    - PDF/HTML report renderer with optional AI narrative
+    - YAML provenance recipe + STAC 1.0 item
+    - Settings dialog (CDSE credentials, API keys, output directory)
+    - 241 automated tests, Python 3.11 and 3.12, Ubuntu and Windows CI

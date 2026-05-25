@@ -51,7 +51,6 @@ jobs:
 
       # ----------------------------------------------------------------
       # 3. Build QGIS plugin zip
-      #    Run from repo root so all paths stay relative to GITHUB_WORKSPACE.
       #    The zip contains a top-level terrapulse/ folder so QGIS can
       #    install it directly via "Install from ZIP".
       # ----------------------------------------------------------------
@@ -60,7 +59,6 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           ZIP_NAME="terrapulse_${VERSION}.zip"
 
-          # zip from inside plugin/ so entries are terrapulse/...
           (cd plugin && zip -r "../${ZIP_NAME}" terrapulse/ \
             -x "*.pyc" \
             -x "*/__pycache__/*" \
@@ -97,8 +95,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       # ----------------------------------------------------------------
-      # 6. Publish GitHub Release (creates or updates the release for
-      #    this tag; attaches both the plugin zip and the wheel).
+      # 6. Publish GitHub Release
       # ----------------------------------------------------------------
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -137,3 +134,40 @@ jobs:
             ```
             ${{ env.CHECKSUMS }}
             ```
+
+      # ----------------------------------------------------------------
+      # 7. Publish to official QGIS Plugin Repository
+      #    Runs only when OSGEO_USERNAME + OSGEO_PASSWORD secrets are set.
+      #    Skipped on pre-release tags (rc / alpha / beta).
+      #
+      #    To enable: add these two secrets in
+      #    GitHub → Settings → Secrets and variables → Actions:
+      #      OSGEO_USERNAME   — your OSGeo ID (https://www.osgeo.org)
+      #      OSGEO_PASSWORD   — your OSGeo password
+      # ----------------------------------------------------------------
+      - name: Install qgis-plugin-ci
+        if: |
+          env.OSGEO_USERNAME != '' &&
+          !contains(steps.version.outputs.VERSION, 'rc') &&
+          !contains(steps.version.outputs.VERSION, 'alpha') &&
+          !contains(steps.version.outputs.VERSION, 'beta')
+        env:
+          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
+        run: pip install qgis-plugin-ci --quiet
+
+      - name: Publish to QGIS Plugin Repository
+        if: |
+          env.OSGEO_USERNAME != '' &&
+          !contains(steps.version.outputs.VERSION, 'rc') &&
+          !contains(steps.version.outputs.VERSION, 'alpha') &&
+          !contains(steps.version.outputs.VERSION, 'beta')
+        env:
+          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
+          OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          qgis-plugin-ci release "${{ steps.version.outputs.VERSION }}" \
+            --github-token "$GITHUB_TOKEN" \
+            --osgeo-username "$OSGEO_USERNAME" \
+            --osgeo-password "$OSGEO_PASSWORD"
+          echo "✓ Published to https://plugins.qgis.org/plugins/terrapulse/"
