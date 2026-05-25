@@ -2,12 +2,13 @@
 
 > AI-powered ground deformation and subsidence intelligence for QGIS
 
-[![CI](https://github.com/terrapulse/terrapulse/actions/workflows/ci.yml/badge.svg)](https://github.com/terrapulse/terrapulse/actions/workflows/ci.yml)
-[![Release](https://github.com/terrapulse/terrapulse/actions/workflows/release.yml/badge.svg)](https://github.com/terrapulse/terrapulse/releases)
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+[![CI](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/ci.yml)
+[![Release](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/release.yml/badge.svg)](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases)
+[![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](plugin/terrapulse/LICENSE)
 [![QGIS: 3.34+](https://img.shields.io/badge/QGIS-3.34%20LTR-green.svg)](https://qgis.org)
 [![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-yellow.svg)](https://python.org)
-[![Tests: 230+](https://img.shields.io/badge/tests-230%2B%20passing-brightgreen.svg)](packages/terrapulse_core/tests)
+[![Tests: 241+](https://img.shields.io/badge/tests-241%2B%20passing-brightgreen.svg)](packages/terrapulse_core/tests)
+[![Docker Hub](https://img.shields.io/docker/v/osmanos93/terrapulse-pygmtsar?label=Docker%20Hub&color=2496ED&logo=docker)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar)
 
 TerraPulse lets a **planner, engineer, or NGO worker draw an AOI in QGIS, pick a time window, and receive an interpreted deformation map with risk attribution** — no SAR or InSAR expertise required.
 
@@ -49,8 +50,8 @@ TerraPulse lets a **planner, engineer, or NGO worker draw an AOI in QGIS, pick a
 
 ```bash
 # Download the latest release
-curl -L https://github.com/terrapulse/terrapulse/releases/latest/download/terrapulse_0.2.0.zip \
-     -o terrapulse_0.2.0.zip
+curl -L https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases/latest/download/terrapulse_0.2.1.zip \
+     -o terrapulse_0.2.1.zip
 ```
 
 Then in QGIS: **Plugins → Manage and Install Plugins → Install from ZIP**
@@ -58,10 +59,17 @@ Then in QGIS: **Plugins → Manage and Install Plugins → Install from ZIP**
 ### Install Docker image (local processing)
 
 ```bash
-docker pull terrapulse/pygmtsar:latest
-# Or build from source:
-docker build -f docker/Dockerfile.pygmtsar -t terrapulse-pygmtsar:latest .
+# Pull from Docker Hub (recommended)
+docker pull osmanos93/terrapulse-pygmtsar:latest
+
+# Or a specific version
+docker pull osmanos93/terrapulse-pygmtsar:0.2.1
+
+# Or build from source
+docker build -f docker/Dockerfile.pygmtsar -t osmanos93/terrapulse-pygmtsar:latest .
 ```
+
+> **Docker Hub:** https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar
 
 ---
 
@@ -150,8 +158,8 @@ IPC protocol (JSON over stdin/stdout):
 ### 1. Clone
 
 ```bash
-git clone https://github.com/terrapulse/terrapulse.git
-cd terrapulse
+git clone https://github.com/Osman-Geomatics93/TerraPulse-Plugin.git
+cd TerraPulse-Plugin
 ```
 
 ### 2. Install core package
@@ -205,7 +213,7 @@ All settings are persisted via QGIS settings (Windows registry / macOS plist / L
 | Anthropic API key | `terrapulse/anthropic_api_key` | *(empty)* | Optional |
 | Output directory | `terrapulse/output_dir` | System temp | Empty = auto |
 | Max scenes | `terrapulse/max_scenes` | 30 | 6–60 |
-| Docker image | `terrapulse/docker_image` | `terrapulse-pygmtsar:latest` | |
+| Docker image | `terrapulse/docker_image` | `osmanos93/terrapulse-pygmtsar:latest` | |
 | Default mode | `terrapulse/default_mode` | `standard` | |
 | Generate PDF | `terrapulse/generate_pdf` | `false` | Requires WeasyPrint |
 
@@ -243,16 +251,19 @@ All settings are persisted via QGIS settings (Windows registry / macOS plist / L
 Releases are automated via GitHub Actions:
 
 ```bash
-# 1. Update version in __version__.py and metadata.txt
-# 2. Tag and push
-git tag v0.2.0
-git push origin v0.2.0
-# → CI runs tests → release.yml packages zip → uploads to GitHub Releases + QGIS repo
+# 1. Bump version in:
+#    - packages/terrapulse_core/src/terrapulse_core/__version__.py
+#    - packages/terrapulse_core/pyproject.toml
+#    - plugin/terrapulse/metadata.txt
+#    - CHANGELOG.md + plugin/CHANGELOG.md
+# 2. Tag WITHOUT a v prefix (required by qgis-plugin-ci)
+git tag 0.2.1
+git push origin 0.2.1
+# → CI packages zip + wheel → GitHub Release → plugins.qgis.org
 ```
 
 Required GitHub secrets:
-- `QGIS_PLUGIN_REPO_TOKEN` — from plugins.qgis.org
-- `OSGEO_USERNAME` / `OSGEO_PASSWORD` — OSGeo account
+- `OSGEO_USERNAME` / `OSGEO_PASSWORD` — OSGeo account (https://id.osgeo.org)
 
 ---
 
