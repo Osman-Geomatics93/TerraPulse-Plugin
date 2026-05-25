@@ -1,190 +1,122 @@
-# TerraPulse 🌍
+<div align="center">
 
-> AI-powered ground deformation and subsidence intelligence for QGIS
+# 🌍 TerraPulse
+
+### AI-powered ground deformation & subsidence intelligence for QGIS
+
+*Draw an AOI. Pick a date range. Get a deformation map.*  
+*No SAR expertise required.*
+
+<br/>
 
 [![CI](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/ci.yml)
 [![Release](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/actions/workflows/release.yml/badge.svg)](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases)
+[![QGIS Plugin](https://img.shields.io/badge/QGIS-Plugin%20Repository-589632?logo=qgis&logoColor=white)](https://plugins.qgis.org/plugins/terrapulse/)
+[![Docker Hub](https://img.shields.io/docker/v/osmanos93/terrapulse-pygmtsar?label=Docker%20Hub&color=2496ED&logo=docker&logoColor=white)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](plugin/terrapulse/LICENSE)
-[![QGIS: 3.34+](https://img.shields.io/badge/QGIS-3.34%20LTR-green.svg)](https://qgis.org)
-[![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-yellow.svg)](https://python.org)
-[![Tests: 241+](https://img.shields.io/badge/tests-241%2B%20passing-brightgreen.svg)](packages/terrapulse_core/tests)
-[![Docker Hub](https://img.shields.io/docker/v/osmanos93/terrapulse-pygmtsar?label=Docker%20Hub&color=2496ED&logo=docker)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar)
+[![Tests](https://img.shields.io/badge/tests-241%2B%20passing-brightgreen?logo=pytest&logoColor=white)](packages/terrapulse_core/tests)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://python.org)
+[![QGIS](https://img.shields.io/badge/QGIS-3.34%20LTR-589632?logo=qgis&logoColor=white)](https://qgis.org)
 
-TerraPulse lets a **planner, engineer, or NGO worker draw an AOI in QGIS, pick a time window, and receive an interpreted deformation map with risk attribution** — no SAR or InSAR expertise required.
+<br/>
 
----
+[**📦 Install Plugin**](#-installation) · [**🐳 Docker Image**](#-docker-engine) · [**📖 Docs**](#-first-run-walkthrough) · [**🤝 Contribute**](#-contributing)
 
-## What it does
-
-| Step | What happens |
-|------|-------------|
-| **1. Draw AOI** | Rubber-band polygon on the QGIS canvas, or import from a vector layer |
-| **2. STAC discovery** | Queries Sentinel-1 SLC stacks from [Copernicus Data Space](https://dataspace.copernicus.eu/) |
-| **3. InSAR processing** | SBAS-InSAR via PyGMTSAR (local Docker) or OpenEO (CDSE cloud) |
-| **4. ML classification** | Pixels labelled: Stable / Linear / Seasonal / Accelerating / Anomalous |
-| **5. Risk overlay** | OSM buildings, roads, pipelines, and critical nodes ranked by deformation exposure |
-| **6. Report** | HTML + optional PDF with LLM-written narrative; YAML recipe + STAC 1.0 item |
+</div>
 
 ---
 
-## Quick start
+## ✨ What TerraPulse Does
 
-### Prerequisites
+TerraPulse turns **Sentinel-1 SAR time-series** into actionable ground deformation intelligence — directly inside QGIS, with zero satellite imagery expertise required.
 
-| Requirement | Minimum | Notes |
-|-------------|---------|-------|
-| QGIS | 3.34 LTR | Plugin interface |
-| Python | 3.11 | Core package |
-| Docker Desktop | 4.x | Local InSAR processing (optional for cloud mode) |
-| CDSE account | — | [Free registration](https://dataspace.copernicus.eu/) for Sentinel-1 access |
-| Anthropic API key | — | [Optional](https://console.anthropic.com/) — for AI-written report narrative |
+<table>
+<tr>
+<td width="50%">
 
-### Install from QGIS Plugin Repository (recommended)
+**🗺️ Draw your Area of Interest**  
+Use the built-in rubber-band polygon tool or import any vector layer as your AOI.
 
-1. Open QGIS → **Plugins → Manage and Install Plugins**
-2. Search **"TerraPulse"**
-3. Click **Install Plugin**
-4. Go to **Plugins → TerraPulse → TerraPulse Settings** and enter your CDSE credentials
+**🛰️ Automatic STAC Discovery**  
+Queries the Copernicus Data Space Ecosystem catalog and builds an optimal Sentinel-1 SLC stack for your time window.
 
-### Install from ZIP (latest release)
+**⚙️ SBAS-InSAR Processing**  
+Runs a full Small Baseline Subset pipeline via PyGMTSAR inside a local Docker container — no cloud subscription needed.
 
-```bash
-# Download the latest release
-curl -L https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases/latest/download/terrapulse_0.2.1.zip \
-     -o terrapulse_0.2.1.zip
-```
+</td>
+<td width="50%">
 
-Then in QGIS: **Plugins → Manage and Install Plugins → Install from ZIP**
+**🤖 ML Deformation Classification**  
+Random Forest classifier labels every pixel: Stable / Linear / Seasonal / Accelerating / Anomalous.
 
-### Install Docker image (local processing)
+**⚠️ Infrastructure Risk Overlay**  
+Cross-references OSM buildings, roads, pipelines and critical nodes with deformation rates to produce a composite risk score.
 
-```bash
-# Pull from Docker Hub (recommended)
-docker pull osmanos93/terrapulse-pygmtsar:latest
+**📄 AI-Written Reports**  
+Generates HTML + PDF reports with plain-language narratives powered by Anthropic Claude, plus a YAML provenance recipe and STAC 1.0 item.
 
-# Or a specific version
-docker pull osmanos93/terrapulse-pygmtsar:0.2.1
-
-# Or build from source
-docker build -f docker/Dockerfile.pygmtsar -t osmanos93/terrapulse-pygmtsar:latest .
-```
-
-> **Docker Hub:** https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar
+</td>
+</tr>
+</table>
 
 ---
 
-## First run walkthrough
+## 🔄 Processing Pipeline
 
-1. **Open TerraPulse** — toolbar icon or **Plugins → TerraPulse**
-2. **Enter settings** — CDSE username + password (first run only)
-3. **Draw AOI** — click "✏ Draw on Map", draw a polygon over your area
-4. **Set dates** — e.g. 2023-01-01 → 2023-12-31
-5. **Discover scenes** — click "🔍 Discover Scenes" to preview the data stack
-6. **Run** — click "🚀 Run Analysis" (≈2 hr for Standard mode)
-7. **Results dialog** → Add to Map / Classify / Generate Report
+```
+  ┌──────────────┐     ┌─────────────────┐     ┌──────────────────────────────────┐
+  │  QGIS Plugin │     │  Copernicus STAC │     │       Docker Container           │
+  │              │     │  (free account)  │     │  osmanos93/terrapulse-pygmtsar   │
+  │  1. Draw AOI │────▶│  2. Discover     │────▶│  3. Download SLC scenes          │
+  │  2. Set dates│     │     Sentinel-1   │     │  4. Coregistration (PyGMTSAR)    │
+  │  3. Click Run│     │     SLC stack    │     │  5. SBAS interferogram stack     │
+  └──────────────┘     └─────────────────┘     │  6. Phase unwrapping (SNAPHU)    │
+          │                                     │  7. SBAS inversion → velocity    │
+          │            ┌─────────────────┐      └──────────────────┬───────────────┘
+          │            │  QGIS Results   │                         │
+          └───────────▶│                 │◀────── COG velocity ────┘
+                       │  8. ML classify │        + coherence raster
+                       │  9. Risk overlay│
+                       │  10. Report PDF │
+                       └─────────────────┘
+```
+
+**IPC protocol:** JSON over stdin/stdout — the plugin speaks to the Docker engine via a lightweight pipe, throttled to prevent buffer saturation on large scenes.
 
 ---
 
-## Repository structure
+## ⚡ Performance
 
-```
-terrapulse/
-├── packages/
-│   └── terrapulse_core/       ← Pure Python — QGIS-independent processing engine
-│       ├── src/terrapulse_core/
-│       │   ├── stac/          STAC discovery + models
-│       │   ├── insar/         PyGMTSAR / OpenEO engine wrappers
-│       │   ├── io/            COG writer, engine IPC (Docker subprocess)
-│       │   ├── ml/            Feature extraction, RF classifier, anomaly detector
-│       │   ├── risk/          OSM querier, asset risk ranker
-│       │   ├── reporting/     Jinja2/WeasyPrint renderer, LLM client
-│       │   └── provenance/    YAML recipe, STAC item writer
-│       └── tests/             219+ pytest tests (no QGIS required)
-│
-├── plugin/
-│   └── terrapulse/            ← QGIS plugin (thin PyQt5 wrapper)
-│       ├── dialogs/           Main dialog, Settings dialog, Results dialog
-│       ├── tasks/             QgsTask: STAC, InSAR, Classify, Report
-│       ├── layers/            Layer loaders (velocity, coherence, classification)
-│       ├── map_tools/         Rubber-band AOI polygon tool
-│       ├── utils/             QGIS message bar helpers
-│       └── settings_manager.py  Typed QgsSettings accessors
-│
-├── docker/
-│   ├── Dockerfile.pygmtsar    Local SBAS-InSAR engine (PyGMTSAR + GMTSAR)
-│   ├── Dockerfile.mintpy      MintPy alternative engine
-│   └── engine_server.py       JSON-over-stdin/stdout IPC server
-│
-├── .github/workflows/
-│   ├── ci.yml                 pytest + ruff + mypy on push/PR
-│   └── release.yml            Package zip + GitHub Release + QGIS repo upload
-│
-└── .plugin-ci.yml             qgis-plugin-ci configuration
-```
+| Mode | Typical Time | Scenes | Resolution | Best For |
+|------|-------------|--------|-----------|----------|
+| 🟢 **Quick** | ~30 min | up to 10 | Coarse | Rapid assessment, preview |
+| 🟡 **Standard** | ~2 hours | up to 24 | Medium | Default — balanced quality |
+| 🔴 **High Precision** | ~6 hours | up to 60 | Maximum | Final analysis, reporting |
+
+> **4× faster downloads** via parallel HTTP Range requests — a 8 GB SLC scene downloads in minutes, not hours.
 
 ---
 
-## Architecture
+## 📦 Installation
+
+### Option 1 — QGIS Plugin Repository *(recommended)*
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  QGIS process                                                   │
-│                                                                 │
-│  MainDialog ──► AOIMapTool (rubber band polygon)               │
-│      │                                                         │
-│      ├──► STACDiscoveryTask ──► terrapulse_core.stac.client    │
-│      │                                                         │
-│      └──► InSARTask ──► EngineIPCClient ──►  Docker subprocess │
-│                                              │                 │
-│  ResultsDialog                               │  engine_server  │
-│      ├──► ClassifyTask ──► terrapulse_core.ml                 │
-│      └──► ReportTask ──► terrapulse_core.{risk,reporting}     │
-│                                                                 │
-│  SettingsManager ──► QgsSettings (OS user profile)             │
-└─────────────────────────────────────────────────────────────────┘
-
-IPC protocol (JSON over stdin/stdout):
-  Plugin ──► {"type":"run","data":{...}} ──► docker run -i engine_server.py
-  Plugin ◄── {"type":"progress","data":{...}} ◄── per processing step
-  Plugin ◄── {"type":"result","data":{...}}  ◄── velocity + coherence COG paths
+QGIS → Plugins → Manage and Install Plugins → Search: "TerraPulse" → Install
 ```
 
-**Key design principle:** `terrapulse_core` is a pure Python package with zero QGIS dependency. It runs inside the Docker container and is tested without QGIS. The plugin is a thin Qt layer that only manages UI state.
+### Option 2 — Install from ZIP
 
----
+Download the latest release ZIP and install via **Plugins → Install from ZIP**:
 
-## Development setup
+[![Download ZIP](https://img.shields.io/github/v/release/Osman-Geomatics93/TerraPulse-Plugin?label=Download%20ZIP&logo=github&color=181717)](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases/latest)
 
-### 1. Clone
+### Option 3 — Clone & symlink *(development)*
 
 ```bash
 git clone https://github.com/Osman-Geomatics93/TerraPulse-Plugin.git
 cd TerraPulse-Plugin
 ```
-
-### 2. Install core package
-
-```bash
-cd packages/terrapulse_core
-pip install -e ".[dev]"
-```
-
-### 3. Run tests
-
-```bash
-pytest -v                          # all 219+ tests
-pytest tests/test_ml.py -v        # ML module only
-pytest -k "not integration" -v    # exclude integration tests
-```
-
-### 4. Linting + type checking
-
-```bash
-ruff check src/          # PEP 8, imports, type annotations
-mypy src/                # strict type checking
-```
-
-### 5. Install plugin in QGIS (development)
 
 **Windows:**
 ```powershell
@@ -192,114 +124,246 @@ $PluginDir = "$env:APPDATA\QGIS\QGIS3\profiles\default\python\plugins"
 New-Item -ItemType SymbolicLink -Path "$PluginDir\terrapulse" -Target (Resolve-Path plugin\terrapulse)
 ```
 
-**Linux/macOS:**
+**Linux / macOS:**
 ```bash
-PLUGIN_DIR=~/.local/share/QGIS/QGIS3/profiles/default/python/plugins
-ln -s $(pwd)/plugin/terrapulse $PLUGIN_DIR/terrapulse
+ln -s $(pwd)/plugin/terrapulse \
+      ~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/terrapulse
 ```
 
-Then in QGIS: **Plugins → Manage and Install Plugins → Installed** → enable TerraPulse.
-
 ---
 
-## Configuration
+## 🐳 Docker Engine
 
-All settings are persisted via QGIS settings (Windows registry / macOS plist / Linux ini file):
-
-| Setting | Key | Default | Notes |
-|---------|-----|---------|-------|
-| CDSE username | `terrapulse/cdse_username` | *(empty)* | Required |
-| CDSE password | `terrapulse/cdse_password` | *(empty)* | Required |
-| Anthropic API key | `terrapulse/anthropic_api_key` | *(empty)* | Optional |
-| Output directory | `terrapulse/output_dir` | System temp | Empty = auto |
-| Max scenes | `terrapulse/max_scenes` | 30 | 6–60 |
-| Docker image | `terrapulse/docker_image` | `osmanos93/terrapulse-pygmtsar:latest` | |
-| Default mode | `terrapulse/default_mode` | `standard` | |
-| Generate PDF | `terrapulse/generate_pdf` | `false` | Requires WeasyPrint |
-
----
-
-## Processing modes
-
-| Mode | Time | Scene limit | Use case |
-|------|------|-------------|----------|
-| Quick | ~30 min | 10 | Rapid preview, coarse resolution |
-| Standard | ~2 hr | 24 | Default — balanced quality/speed |
-| High precision | ~6 hr | 60 | Maximum resolution for final analysis |
-
----
-
-## Technology stack
-
-| Layer | Library | Version |
-|-------|---------|---------|
-| InSAR (local) | PyGMTSAR + GMTSAR + SNAPHU | latest |
-| InSAR (remote) | OpenEO via CDSE | ≥ 0.31 |
-| STAC | pystac-client | ≥ 0.8 |
-| Raster I/O | rasterio + odc-stac + xarray | ≥ 1.3 |
-| ML | scikit-learn (default) | ≥ 1.5 |
-| ML (optional) | PyTorch + Prithvi-EO (IBM/NASA) | — |
-| Risk | overpy + GeoPandas | ≥ 0.7 / ≥ 1.0 |
-| Reporting | Jinja2 + WeasyPrint + Plotly | ≥ 3.1 / ≥ 62 |
-| LLM | anthropic SDK (claude-haiku) | ≥ 0.28 |
-| Plugin CI | qgis-plugin-ci | latest |
-
----
-
-## Release process
-
-Releases are automated via GitHub Actions:
+The InSAR processing engine runs inside a pre-built Docker image — no GMTSAR or PyGMTSAR installation required on your machine.
 
 ```bash
-# 1. Bump version in:
-#    - packages/terrapulse_core/src/terrapulse_core/__version__.py
-#    - packages/terrapulse_core/pyproject.toml
-#    - plugin/terrapulse/metadata.txt
-#    - CHANGELOG.md + plugin/CHANGELOG.md
-# 2. Tag WITHOUT a v prefix (required by qgis-plugin-ci)
-git tag 0.2.1
-git push origin 0.2.1
-# → CI packages zip + wheel → GitHub Release → plugins.qgis.org
+# Pull from Docker Hub (recommended)
+docker pull osmanos93/terrapulse-pygmtsar:latest
+
+# Verify it works
+docker run --rm osmanos93/terrapulse-pygmtsar:latest \
+    python -c "import pygmtsar, terrapulse_core; print('Engine ready ✓')"
 ```
 
-Required GitHub secrets:
-- `OSGEO_USERNAME` / `OSGEO_PASSWORD` — OSGeo account (https://id.osgeo.org)
+| Image | Size | Contents |
+|-------|------|----------|
+| `osmanos93/terrapulse-pygmtsar:latest` | 928 MB | Ubuntu 22.04 · GMT 6.3 · SNAPHU · PyGMTSAR · Python 3.11 |
+
+> 🔗 **Docker Hub:** https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar
 
 ---
 
-## Phased roadmap
+## 🚀 First Run Walkthrough
+
+After installing the plugin and pulling the Docker image:
+
+| Step | Action |
+|------|--------|
+| **1** | Open QGIS → click the 🌍 TerraPulse toolbar icon |
+| **2** | Go to **Settings** → enter your [free CDSE account](https://dataspace.copernicus.eu/) credentials |
+| **3** | Click **✏ Draw on Map** → draw a polygon over your study area |
+| **4** | Set **Start date** and **End date** (e.g. 2023-01-01 → 2023-12-31) |
+| **5** | Click **🔍 Discover Scenes** → preview the available Sentinel-1 stack |
+| **6** | Select processing mode → click **🚀 Run Analysis** |
+| **7** | Results dialog opens → **Add to Map** · **Classify** · **Generate Report** |
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| QGIS | ≥ 3.34 LTR | [Download](https://qgis.org/download/) |
+| Docker Desktop | ≥ 4.x | [Download](https://www.docker.com/products/docker-desktop/) |
+| CDSE account | — | [Free registration](https://dataspace.copernicus.eu/) |
+| Anthropic API key | — | [Optional](https://console.anthropic.com/) — AI narrative in reports |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌──────────────────────────── QGIS process ────────────────────────────────┐
+│                                                                           │
+│   MainDialog ──► AOIMapTool          SettingsManager ──► QgsSettings     │
+│       │                                                                   │
+│       ├──► STACDiscoveryTask ────────────────► terrapulse_core.stac      │
+│       │         (QgsTask, non-blocking)                                   │
+│       │                                                                   │
+│       └──► InSARTask ──► EngineIPCClient ──► docker run -i engine_server │
+│                 │              │                      │                   │
+│                 │              └── JSON/stdin ────────┘                   │
+│                 │              ◄── JSON/stdout (progress + result)        │
+│                 │                                                         │
+│   ResultsDialog ◄──────────────────────────────────────────────────────  │
+│       ├──► ClassifyTask ────────► terrapulse_core.ml                     │
+│       ├──► ReportTask ──────────► terrapulse_core.{risk, reporting}      │
+│       └──► Layer loaders ───────► QgsRasterLayer (COG)                   │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+         ┌─────────────────── Docker container ──────────────────────┐
+         │  engine_server.py                                          │
+         │    ├── STACClient → Copernicus STAC API                    │
+         │    ├── CDSEDownloader → parallel HTTP Range (4× speed)     │
+         │    └── PyGMTSAREngine → coregister → unwrap → invert      │
+         └────────────────────────────────────────────────────────────┘
+```
+
+**Design principle:** `terrapulse_core` is a pure Python package with **zero QGIS dependency**. It runs inside Docker and is fully tested without QGIS. The plugin is a thin Qt wrapper that only manages UI state and task orchestration.
+
+---
+
+## 🔬 Technology Stack
+
+<table>
+<tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+<tr><td>🛰️ InSAR engine (local)</td><td>PyGMTSAR + GMTSAR + SNAPHU</td><td>2024.1.21+</td></tr>
+<tr><td>☁️ InSAR engine (cloud)</td><td>OpenEO via CDSE</td><td>≥ 0.31</td></tr>
+<tr><td>🗂️ STAC catalog</td><td>pystac-client + pystac</td><td>≥ 0.8</td></tr>
+<tr><td>🗺️ Raster I/O</td><td>rasterio + odc-stac + xarray + zarr</td><td>≥ 1.3</td></tr>
+<tr><td>🤖 ML classification</td><td>scikit-learn (Random Forest)</td><td>≥ 1.5</td></tr>
+<tr><td>🌍 Risk analysis</td><td>overpy + GeoPandas + shapely</td><td>≥ 0.7 / ≥ 1.0</td></tr>
+<tr><td>📄 Reporting</td><td>Jinja2 + WeasyPrint + Plotly</td><td>≥ 3.1 / ≥ 62</td></tr>
+<tr><td>🧠 LLM narrative</td><td>Anthropic SDK (Claude)</td><td>≥ 0.28</td></tr>
+<tr><td>🔌 QGIS plugin CI</td><td>qgis-plugin-ci</td><td>latest</td></tr>
+</table>
+
+---
+
+## 🗂️ Repository Structure
+
+```
+TerraPulse-Plugin/
+│
+├── packages/terrapulse_core/          # Pure Python engine (no QGIS dependency)
+│   └── src/terrapulse_core/
+│       ├── stac/                      # Sentinel-1 STAC discovery + models
+│       ├── insar/                     # PyGMTSAR / OpenEO engine wrappers
+│       ├── io/                        # COG writer · Docker IPC client
+│       ├── ml/                        # Feature extraction · RF classifier
+│       ├── risk/                      # OSM querier · asset risk ranker
+│       ├── reporting/                 # Jinja2/WeasyPrint · LLM client
+│       └── provenance/                # YAML recipe · STAC 1.0 item
+│
+├── plugin/terrapulse/                 # QGIS plugin (thin PyQt5 wrapper)
+│   ├── dialogs/                       # Main · Settings · Results dialogs
+│   ├── tasks/                         # QgsTask: STAC · InSAR · Classify · Report
+│   ├── layers/                        # Velocity · coherence · classification loaders
+│   ├── map_tools/                     # Rubber-band AOI polygon tool
+│   └── settings_manager.py           # Typed QgsSettings accessors
+│
+├── docker/
+│   ├── Dockerfile.pygmtsar            # SBAS-InSAR engine image
+│   └── engine_server.py              # JSON-over-stdin/stdout IPC server
+│
+└── .github/workflows/
+    ├── ci.yml                         # pytest · ruff · mypy on every push
+    └── release.yml                    # ZIP · wheel · GitHub Release · QGIS repo
+```
+
+---
+
+## 🛠️ Development Setup
+
+```bash
+# 1. Clone
+git clone https://github.com/Osman-Geomatics93/TerraPulse-Plugin.git
+cd TerraPulse-Plugin
+
+# 2. Install core package in editable mode
+cd packages/terrapulse_core
+pip install -e ".[dev]"
+
+# 3. Run the full test suite (no QGIS required)
+pytest -v                          # 241+ tests
+pytest -k "not integration" -v     # unit tests only
+pytest tests/test_ml.py -v         # ML module only
+
+# 4. Lint + type-check
+ruff check src/
+mypy src/ --strict
+```
+
+### Release a new version
+
+```bash
+# 1. Bump version in __version__.py, pyproject.toml, metadata.txt, CHANGELOG.md
+# 2. Tag WITHOUT a "v" prefix (required by qgis-plugin-ci)
+git tag 0.2.3
+git push origin 0.2.3
+# → CI: packages ZIP + wheel → GitHub Release → plugins.qgis.org → Docker Hub
+```
+
+---
+
+## ⚙️ Configuration
+
+All settings persist via QGIS settings (Windows registry / macOS plist / Linux ini):
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| CDSE username | *(empty)* | Required — [register free](https://dataspace.copernicus.eu/) |
+| CDSE password | *(empty)* | Required |
+| Anthropic API key | *(empty)* | Optional — enables AI report narrative |
+| Docker image | `osmanos93/terrapulse-pygmtsar:latest` | Override for custom builds |
+| Output directory | System temp | Leave empty for auto |
+| Max scenes | `30` | Range: 6–60 |
+| Processing mode | `standard` | quick / standard / high_precision |
+| Generate PDF | `false` | Requires WeasyPrint |
+
+---
+
+## 🗺️ Roadmap
 
 | Phase | Status | Deliverable |
 |-------|--------|-------------|
-| 0 — Scaffold | ✅ **Done** | Plugin loads in QGIS; 61 tests; Docker builds |
-| 1 — MVP | ✅ **Done** | Draw AOI → SBAS → velocity COG layer in QGIS |
-| 2 — ML | ✅ **Done** | 5-class pixel classification + anomaly detection |
-| 3 — Reporting | ✅ **Done** | Risk overlay + HTML/PDF report + STAC item |
-| 4 — Polish | ✅ **Done** | Settings persistence, qgis-plugin-ci, docs |
+| 0 — Scaffold | ✅ Complete | Plugin loads in QGIS · 61 tests · Docker builds |
+| 1 — MVP | ✅ Complete | Draw AOI → SBAS → velocity COG in QGIS |
+| 2 — ML | ✅ Complete | 5-class pixel classification + anomaly detection |
+| 3 — Reporting | ✅ Complete | Risk overlay · HTML/PDF report · STAC 1.0 item |
+| 4 — Release | ✅ Complete | QGIS Plugin Repository · Docker Hub · CI/CD |
+| 5 — UX Polish | 🔄 Planned | Progress animations · dark theme · tutorial wizard |
+| 6 — Cloud Mode | 🔄 Planned | OpenEO / CDSE cloud processing (no Docker required) |
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-1. Fork and branch from `develop`
-2. All PRs must pass: `ruff check`, `mypy --strict`, `pytest` (219+ tests)
-3. New features need tests in `packages/terrapulse_core/tests/`
-4. Plugin-only code goes in `plugin/terrapulse/` — no QGIS imports in `terrapulse_core`
-5. See [docs/developer-guide.md](docs/developer-guide.md) for detailed guidelines
+Contributions are welcome! Please:
 
-### Pre-commit hooks
+1. **Fork** the repository and branch from `main`
+2. Ensure all checks pass: `ruff check` · `mypy --strict` · `pytest` (241+ tests)
+3. New features must include tests in `packages/terrapulse_core/tests/`
+4. Keep QGIS imports out of `terrapulse_core` — it must stay QGIS-free
 
 ```bash
+# Set up pre-commit hooks
+pip install pre-commit
 pre-commit install
 pre-commit run --all-files
 ```
 
+**Issues and feature requests** → [GitHub Issues](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/issues)
+
 ---
 
-## License
+## 📜 License & Credits
 
-**GPL-3.0** — required for all plugins depending on QGIS core libraries.
+**GPL-2.0** — required for QGIS plugin compatibility.
 
-- Sentinel-1 data: ESA / Copernicus Programme (free, open)
-- Foundation model: Prithvi-EO-1.0 (Apache 2.0, IBM/NASA) — optional component
-- OSM data: © OpenStreetMap contributors (ODbL)
+| Component | License | Notes |
+|-----------|---------|-------|
+| QGIS | GPL-2.0+ | [qgis.org](https://qgis.org) |
+| PyGMTSAR | MIT | [github.com/mobigroup/PyGMTSAR](https://github.com/mobigroup/PyGMTSAR) |
+| Sentinel-1 data | Copernicus open access | ESA / EU Copernicus Programme |
+| scikit-learn | BSD-3 | [scikit-learn.org](https://scikit-learn.org) |
+| rasterio | BSD-3 | [rasterio.readthedocs.io](https://rasterio.readthedocs.io) |
+| OSM data | ODbL | © OpenStreetMap contributors |
+
+---
+
+<div align="center">
+
+Made with ❤️ by **OSMAN IBRAHIM**  
+[plugins.qgis.org/plugins/terrapulse](https://plugins.qgis.org/plugins/terrapulse/) · [Docker Hub](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar) · [GitHub Releases](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/releases)
+
+</div>
