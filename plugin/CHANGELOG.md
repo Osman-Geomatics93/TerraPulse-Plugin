@@ -1,5 +1,10 @@
 # TerraPulse Changelog
 
+## 0.2.1 (2026-05-26)
+
+### Changed
+- Author name updated to OSMAN IBRAHIM
+
 ## 0.2.0 (2026-05-25)
 
 ### Fixed
