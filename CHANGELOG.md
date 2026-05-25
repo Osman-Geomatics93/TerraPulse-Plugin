@@ -1,5 +1,11 @@
 # TerraPulse Changelog
 
+## 0.2.2 (2026-05-26)
+
+### Changed
+- Default Docker image updated to `osmanos93/terrapulse-pygmtsar:latest` (Docker Hub)
+- README badges and URLs corrected to Osman-Geomatics93/TerraPulse-Plugin
+
 ## 0.2.1 (2026-05-26)
 
 ### Changed
