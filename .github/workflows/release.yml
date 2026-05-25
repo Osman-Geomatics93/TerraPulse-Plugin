@@ -15,10 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ----------------------------------------------------------------
+      # 1. Extract version from tag (e.g. v0.2.0 → 0.2.0)
+      # ----------------------------------------------------------------
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      # ----------------------------------------------------------------
+      # 2. Version consistency checks
+      # ----------------------------------------------------------------
       - name: Validate metadata.txt version matches tag
         run: |
           META_VER=$(grep "^version=" plugin/terrapulse/metadata.txt | cut -d= -f2)
@@ -27,7 +33,7 @@ jobs:
             echo "::error::Version mismatch: metadata.txt=$META_VER, tag=$TAG_VER"
             exit 1
           fi
-          echo "Version check passed: $TAG_VER"
+          echo "✓ metadata.txt version: $TAG_VER"
 
       - name: Validate __version__.py matches tag
         run: |
@@ -41,55 +47,93 @@ jobs:
             echo "::error::__version__.py mismatch: py=$PY_VER, tag=$TAG_VER"
             exit 1
           fi
-          echo "Python version check passed: $PY_VER"
+          echo "✓ __version__.py: $PY_VER"
 
+      # ----------------------------------------------------------------
+      # 3. Build QGIS plugin zip
+      #    Run from repo root so all paths stay relative to GITHUB_WORKSPACE.
+      #    The zip contains a top-level terrapulse/ folder so QGIS can
+      #    install it directly via "Install from ZIP".
+      # ----------------------------------------------------------------
+      - name: Build QGIS plugin zip
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          ZIP_NAME="terrapulse_${VERSION}.zip"
+
+          # zip from inside plugin/ so entries are terrapulse/...
+          (cd plugin && zip -r "../${ZIP_NAME}" terrapulse/ \
+            -x "*.pyc" \
+            -x "*/__pycache__/*" \
+            -x "*/.DS_Store" \
+            -x "*/deps/*" )
+
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+          echo "✓ Created: ${ZIP_NAME}"
+          ls -lh "${ZIP_NAME}"
+
+      # ----------------------------------------------------------------
+      # 4. Build terrapulse_core Python wheel
+      # ----------------------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install qgis-plugin-ci
-        run: pip install qgis-plugin-ci
-
-      - name: Package plugin zip
+      - name: Build terrapulse_core wheel
         run: |
-          cd plugin
-          zip -r ../terrapulse_${{ steps.version.outputs.VERSION }}.zip \
-            terrapulse/ \
-            -x "*.pyc" -x "*/__pycache__/*" -x "*/.DS_Store"
-          echo "Created: terrapulse_${{ steps.version.outputs.VERSION }}.zip"
-          ls -lh terrapulse_*.zip
+          pip install build --quiet
+          python -m build --wheel --outdir dist packages/terrapulse_core
+          echo "✓ Wheel:"
+          ls -lh dist/*.whl
 
-      - name: Create GitHub Release
+      # ----------------------------------------------------------------
+      # 5. Compute SHA-256 checksums
+      # ----------------------------------------------------------------
+      - name: Compute checksums
+        run: |
+          sha256sum "${{ env.ZIP_NAME }}" dist/*.whl | tee checksums.txt
+          echo "CHECKSUMS<<EOF" >> $GITHUB_ENV
+          cat checksums.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # ----------------------------------------------------------------
+      # 6. Publish GitHub Release (creates or updates the release for
+      #    this tag; attaches both the plugin zip and the wheel).
+      # ----------------------------------------------------------------
+      - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "terrapulse_${{ steps.version.outputs.VERSION }}.zip"
-          generate_release_notes: true
+          tag_name: "v${{ steps.version.outputs.VERSION }}"
+          name: "TerraPulse v${{ steps.version.outputs.VERSION }}"
           draft: false
           prerelease: ${{ contains(steps.version.outputs.VERSION, 'rc') || contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') }}
+          files: |
+            ${{ env.ZIP_NAME }}
+            dist/terrapulse_core-${{ steps.version.outputs.VERSION }}-py3-none-any.whl
           body: |
             ## TerraPulse v${{ steps.version.outputs.VERSION }}
 
-            ### Installation
-            1. Download `terrapulse_${{ steps.version.outputs.VERSION }}.zip` below
-            2. In QGIS → Plugins → Manage and Install Plugins → Install from ZIP
-            3. Select the downloaded file and click "Install Plugin"
+            ### 📦 Downloads
 
-            Or install directly from the QGIS Plugin Repository:
-            Plugins → Manage and Install Plugins → search "TerraPulse"
+            | File | What it is |
+            |------|-----------|
+            | `terrapulse_${{ steps.version.outputs.VERSION }}.zip` | **QGIS Plugin** — install via *Plugins → Manage → Install from ZIP* |
+            | `terrapulse_core-${{ steps.version.outputs.VERSION }}-py3-none-any.whl` | **Python wheel** — core engine for Docker / dev environments |
+
+            ### 🚀 Quick Install (QGIS)
+
+            1. Download `terrapulse_${{ steps.version.outputs.VERSION }}.zip` below
+            2. In QGIS → **Plugins → Manage and Install Plugins → Install from ZIP**
+            3. Browse to the downloaded file → click **Install Plugin**
+            4. Enable the panel: **Plugins → TerraPulse → Open TerraPulse**
 
             ### Requirements
             - QGIS ≥ 3.34 LTR
             - Python ≥ 3.11
-            - Docker Desktop (for local processing)
+            - Docker Desktop (for local InSAR processing)
             - Free [Copernicus Data Space](https://dataspace.copernicus.eu/) account
 
-      - name: Upload to QGIS Plugin Repository
-        if: ${{ !contains(steps.version.outputs.VERSION, 'alpha') && !contains(steps.version.outputs.VERSION, 'beta') }}
-        env:
-          QGIS_PLUGIN_REPO_TOKEN: ${{ secrets.QGIS_PLUGIN_REPO_TOKEN }}
-        run: |
-          qgis-plugin-ci release ${{ steps.version.outputs.VERSION }} \
-            --github-token ${{ secrets.GITHUB_TOKEN }} \
-            --osgeo-username ${{ secrets.OSGEO_USERNAME }} \
-            --osgeo-password ${{ secrets.OSGEO_PASSWORD }}
+            ### SHA-256 Checksums
+            ```
+            ${{ env.CHECKSUMS }}
+            ```
