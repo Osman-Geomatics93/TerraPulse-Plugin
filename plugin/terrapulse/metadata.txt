@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.2
+version=0.2.3
 author=OSMAN IBRAHIM
 email=mohamed.fawzy98@hotmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,9 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.3 (2026-05-26)
+    - Fix security scan: suppress detect-secrets false positives in settings_manager.py
+
     0.2.2 (2026-05-26)
     - Default Docker image updated to osmanos93/terrapulse-pygmtsar:latest (Docker Hub)
 

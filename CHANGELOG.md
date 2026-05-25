@@ -1,5 +1,11 @@
 # TerraPulse Changelog
 
+## 0.2.3 (2026-05-26)
+
+### Fixed
+- Security scan: suppress `detect-secrets` false positives in `settings_manager.py`
+  (settings key name strings are not credentials; `# pragma: allowlist secret` added)
+
 ## 0.2.2 (2026-05-26)
 
 ### Changed

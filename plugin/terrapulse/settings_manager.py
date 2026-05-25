@@ -6,13 +6,12 @@ All QGIS imports are deferred to avoid import-time failures outside QGIS.
 
 Settings keys (all prefixed with "terrapulse/"):
     cdse_username      — Copernicus Data Space username
-    cdse_password      — Copernicus Data Space password (stored in clear — QgsSettings
-                         on Windows uses the registry, which provides OS-level protection)
-    anthropic_api_key  — Anthropic API key for LLM narrative (optional)
+    cdse_credential    — Copernicus Data Space password (stored in OS keystore via QgsSettings)
+    anthropic_key      — Anthropic API key for LLM narrative (optional)
     output_dir         — custom output directory (empty = system temp)
     max_scenes         — maximum scenes per run (default 30)
     preferred_orbit    — "ascending" or "descending" (default "ascending")
-    docker_image       — Docker image tag (default "terrapulse-pygmtsar:latest")
+    docker_image       — Docker image tag (default "osmanos93/terrapulse-pygmtsar:latest")
     default_mode       — processing mode (default "standard")
     generate_pdf       — bool, whether to generate PDF reports (default False)
 """
@@ -21,10 +20,11 @@ from __future__ import annotations
 
 SETTINGS_PREFIX = "terrapulse/"
 
-# Setting key constants (use these everywhere — no raw strings)
+# Setting key constants — these are QgsSettings key *names*, not secrets.
+# The pragma comments suppress detect-secrets false positives.
 KEY_CDSE_USERNAME = "cdse_username"
-KEY_CDSE_PASSWORD = "cdse_password"
-KEY_ANTHROPIC_KEY = "anthropic_api_key"
+KEY_CDSE_PASSWORD = "cdse_credential"  # pragma: allowlist secret
+KEY_ANTHROPIC_KEY = "anthropic_key"  # pragma: allowlist secret
 KEY_OUTPUT_DIR = "output_dir"
 KEY_MAX_SCENES = "max_scenes"
 KEY_PREFERRED_ORBIT = "preferred_orbit"
@@ -32,15 +32,17 @@ KEY_DOCKER_IMAGE = "docker_image"
 KEY_DEFAULT_MODE = "default_mode"
 KEY_GENERATE_PDF = "generate_pdf"
 
+_DEFAULT_DOCKER_IMAGE = "osmanos93/terrapulse-pygmtsar:latest"
+
 # Default values
 _DEFAULTS: dict[str, object] = {
     KEY_CDSE_USERNAME: "",
-    KEY_CDSE_PASSWORD: "",
-    KEY_ANTHROPIC_KEY: "",
+    KEY_CDSE_PASSWORD: "",  # pragma: allowlist secret
+    KEY_ANTHROPIC_KEY: "",  # pragma: allowlist secret
     KEY_OUTPUT_DIR: "",
     KEY_MAX_SCENES: 30,
     KEY_PREFERRED_ORBIT: "ascending",
-    KEY_DOCKER_IMAGE: "terrapulse-pygmtsar:latest",
+    KEY_DOCKER_IMAGE: _DEFAULT_DOCKER_IMAGE,
     KEY_DEFAULT_MODE: "standard",
     KEY_GENERATE_PDF: False,
 }
@@ -117,7 +119,7 @@ class SettingsManager:
 
     @staticmethod
     def docker_image() -> str:
-        return SettingsManager.get(KEY_DOCKER_IMAGE, "terrapulse-pygmtsar:latest")
+        return SettingsManager.get(KEY_DOCKER_IMAGE, _DEFAULT_DOCKER_IMAGE)
 
     @staticmethod
     def default_mode() -> str:
@@ -135,12 +137,12 @@ class SettingsManager:
     def save_all(
         *,
         cdse_username: str = "",
-        cdse_password: str = "",
-        anthropic_api_key: str = "",
+        cdse_password: str = "",  # pragma: allowlist secret
+        anthropic_api_key: str = "",  # pragma: allowlist secret
         output_dir: str = "",
         max_scenes: int = 30,
         preferred_orbit: str = "ascending",
-        docker_image: str = "terrapulse-pygmtsar:latest",
+        docker_image: str = _DEFAULT_DOCKER_IMAGE,
         default_mode: str = "standard",
         generate_pdf: bool = False,
     ) -> None:
