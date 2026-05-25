@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 2rem auto; color: #222; }
+    h1   { color: #1A6B4A; }
+    h2   { color: #1A6B4A; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th   { background: #1A6B4A; color: white; padding: 6px 10px; text-align: left; }
+    td   { padding: 5px 10px; border-bottom: 1px solid #eee; }
+    p    { line-height: 1.6; }
+    .meta { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>TerraPulse — {{ title }}</h1>
+  <p class="meta">{{ aoi_description }} &bull; {{ time_window }} &bull; Generated {{ generated_at }}</p>
+
+  <h2>Key Findings</h2>
+  <table>
+    <tr><th>Scenes analysed</th><td>{{ n_scenes }}</td></tr>
+    <tr><th>Max rate (mm/yr)</th><td>{{ "%.1f"|format(max_subsidence_mm_yr|abs) }}</td></tr>
+    <tr><th>Dominant pattern</th><td>{{ dominant_class }}</td></tr>
+    <tr><th>High-risk assets</th><td>{{ n_high_risk_assets }}</td></tr>
+    <tr><th>Mean coherence</th><td>{{ "%.2f"|format(mean_coherence) }}</td></tr>
+  </table>
+
+  <h2>Summary</h2>
+  <p>{{ summary_text }}</p>
+
+  <h2>Infrastructure at Risk</h2>
+  <table>
+    <tr><th>Asset</th><th>Type</th><th>Velocity (mm/yr)</th><th>Risk</th></tr>
+    {% for asset in top_assets %}
+    <tr>
+      <td>{{ asset.name }}</td>
+      <td>{{ asset.asset_type }}</td>
+      <td>{{ "%.1f"|format(asset.mean_velocity) }}</td>
+      <td>{% if asset.risk_score > 7 %}HIGH{% elif asset.risk_score > 4 %}MEDIUM{% else %}LOW{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>Recommendations</h2>
+  <p>{{ recommendations_text }}</p>
+
+  <h2>Provenance</h2>
+  <p>Run ID: <code>{{ run_id }}</code> &bull; Engine: {{ engine_name }} &bull;
+     Mode: {{ processing_mode }} &bull; TerraPulse {{ terrapulse_version }}</p>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# ============================================================
+# TerraPulse — MintPy InSAR Time-Series Container (Phase 1 alternative)
+# ============================================================
+# MintPy handles SBAS time-series inversion only.
+# Input: pre-formed interferograms (HDF5 ifgramStack.h5 from ISCE2/SNAP).
+#
+# Build:
+#   docker build -f docker/Dockerfile.mintpy -t terrapulse-mintpy:latest .
+# ============================================================
+
+FROM mambaorg/micromamba:1.5-ubuntu22.04
+
+LABEL maintainer="TerraPulse Contributors"
+LABEL description="TerraPulse MintPy InSAR time-series environment"
+
+# MintPy has a well-maintained conda environment spec
+# https://mintpy.readthedocs.io/en/latest/installation/
+COPY docker/mintpy_conda_env.yml /tmp/mintpy_conda_env.yml
+
+RUN micromamba install -y -n base -f /tmp/mintpy_conda_env.yml \
+    && micromamba clean --all --yes
+
+# Install terrapulse_core into the MintPy conda env
+COPY packages/terrapulse_core /opt/terrapulse_core
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+RUN pip install --no-cache-dir /opt/terrapulse_core
+
+CMD ["/bin/bash"]

@@ -1,0 +1,53 @@
+---
+# TerraPulse Docker Compose
+# For local development and testing.
+#
+# Usage:
+#   docker-compose up pygmtsar      # start PyGMTSAR engine container
+#   docker-compose run pygmtsar bash  # interactive shell
+#
+# Phase 1 will add a REST-based engine_server service.
+
+version: "3.9"
+
+services:
+  pygmtsar:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.pygmtsar
+    image: terrapulse-pygmtsar:latest
+    container_name: terrapulse_pygmtsar
+    volumes:
+      # Mount a local data directory for SLC input and outputs
+      - type: bind
+        source: ${TERRAPULSE_DATA_DIR:-./data}
+        target: /data
+      # Mount terrapulse_core for live development (remove in production)
+      - type: bind
+        source: ../packages/terrapulse_core/src
+        target: /home/terrapulse/terrapulse_core_dev
+    environment:
+      - TERRAPULSE_OUTPUT_DIR=/data/output
+      - TERRAPULSE_CACHE_DIR=/data/cache
+    stdin_open: true
+    tty: true
+
+  mintpy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mintpy
+    image: terrapulse-mintpy:latest
+    container_name: terrapulse_mintpy
+    volumes:
+      - type: bind
+        source: ${TERRAPULSE_DATA_DIR:-./data}
+        target: /data
+    stdin_open: true
+    tty: true
+
+  # Phase 1: engine REST server
+  # engine-server:
+  #   image: terrapulse-pygmtsar:latest
+  #   ports:
+  #     - "8765:8765"
+  #   command: python -m engine_server --port 8765

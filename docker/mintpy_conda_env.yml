@@ -1,0 +1,22 @@
+# MintPy conda environment specification.
+# Source: https://github.com/insarlab/MintPy/blob/main/docs/installation.md
+name: mintpy
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - mintpy>=1.5
+  - isce3
+  - h5py
+  - numpy
+  - scipy
+  - matplotlib
+  - gdal>=3.6
+  - pyproj>=3.6
+  - shapely>=2.0
+  - geopandas>=1.0
+  - pip
+  - pip:
+    - pyyaml
+    - pydantic>=2.7

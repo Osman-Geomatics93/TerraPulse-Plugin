@@ -1,0 +1,23 @@
+# qgis-plugin-ci configuration
+# https://opengisch.github.io/qgis-plugin-ci/
+
+plugin_path: plugin/terrapulse
+github_organization_slug: terrapulse
+github_repository_slug: terrapulse
+
+# QGIS plugin repository upload
+plugin_repo_url: https://plugins.qgis.org/plugins/add/
+
+# Translations (future)
+# transifex_coordinator: ""
+# translation_source_language: en
+# translation_languages: []
+
+# Extra files to include in the zip (relative to plugin_path)
+# extra_metadata: []
+
+# Files/dirs to exclude from the release zip
+# (in addition to default exclusions: __pycache__, .git, etc.)
+# exclude:
+#   - "*.pyc"
+#   - "tests/"

@@ -1,0 +1,60 @@
+[general]
+name=TerraPulse
+qgisMinimumVersion=3.34
+qgisMaximumVersion=3.99
+description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
+version=0.2.0
+author=TerraPulse Contributors
+email=terrapulse@example.com
+about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
+    select a time window, and receive an interpreted deformation map with risk attribution —
+    no SAR or InSAR expertise required. Powered by Sentinel-1 SBAS-InSAR, scikit-learn
+    classification, and optional LLM-generated plain-language reports.
+
+    Features:
+    - Draw or import AOI, select time window and processing mode
+    - Queries Sentinel-1 SLC stacks from Copernicus Data Space STAC API
+    - Runs InSAR processing locally (Docker/PyGMTSAR) or remotely (OpenEO)
+    - ML pixel classification: stable / linear / seasonal / accelerating / anomalous
+    - OSM infrastructure overlay with risk ranking (buildings, roads, pipelines, critical nodes)
+    - PDF/HTML report with optional AI-written narrative (Anthropic claude-haiku)
+    - YAML provenance recipe + STAC 1.0 item for full reproducibility
+    - Persistent settings (CDSE credentials, API keys, output directory)
+    - Non-blocking background processing via QGIS task manager
+    - 219 automated tests across all modules
+
+tracker=https://github.com/terrapulse/terrapulse/issues
+repository=https://github.com/terrapulse/terrapulse
+homepage=https://terrapulse.readthedocs.io/
+
+tags=InSAR,SAR,Sentinel-1,subsidence,deformation,risk,AI,machine learning,geohazard
+
+icon=resources/icons/terrapulse_32.png
+
+experimental=True
+deprecated=False
+server=False
+
+hasProcessingProvider=False
+
+changelog=
+    0.2.0 (2026-05-25)
+    - Phase 4: Settings persistence (QgsSettings), QGIS status bar integration
+    - Phase 4: Comprehensive README and developer documentation
+    - Phase 4: qgis-plugin-ci release pipeline, GitHub Actions packaging
+    - Phase 3: OSM asset querier (buildings, roads, pipelines, critical nodes)
+    - Phase 3: Risk ranker with composite score formula and type weighting
+    - Phase 3: Jinja2/WeasyPrint HTML+PDF report renderer
+    - Phase 3: STAC 1.0 item writer (hand-crafted, no pystac dependency)
+    - Phase 3: ReportTask and enhanced ResultsDialog with live progress log
+    - Phase 2: RandomForest deformation classifier (5 classes)
+    - Phase 2: IsolationForest anomaly detector
+    - Phase 2: Shannon entropy + confidence + margin uncertainty maps
+    - Phase 2: Synthetic training data generator, model serialisation
+    - Phase 2: ClassifyTask and classification layer loader
+    - Phase 1: Full IPC pipeline (Docker subprocess JSON protocol)
+    - Phase 1: PyGMTSAR engine server, CDSE downloader, COG writer
+    - Phase 1: STACDiscoveryTask and InSARTask background workers
+    - Phase 1: AOI rubber-band map tool, velocity/coherence layer loaders
+    - Phase 0: Plugin loads and unloads cleanly in QGIS 3.34+
+    - Phase 0: Core package skeleton with 219 typed unit tests

@@ -1,0 +1,95 @@
+name: Release QGIS Plugin
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    name: "Package and release plugin"
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Validate metadata.txt version matches tag
+        run: |
+          META_VER=$(grep "^version=" plugin/terrapulse/metadata.txt | cut -d= -f2)
+          TAG_VER="${{ steps.version.outputs.VERSION }}"
+          if [ "$META_VER" != "$TAG_VER" ]; then
+            echo "::error::Version mismatch: metadata.txt=$META_VER, tag=$TAG_VER"
+            exit 1
+          fi
+          echo "Version check passed: $TAG_VER"
+
+      - name: Validate __version__.py matches tag
+        run: |
+          PY_VER=$(python3 -c "
+          import sys; sys.path.insert(0, 'packages/terrapulse_core/src')
+          from terrapulse_core.__version__ import __version__
+          print(__version__)
+          ")
+          TAG_VER="${{ steps.version.outputs.VERSION }}"
+          if [ "$PY_VER" != "$TAG_VER" ]; then
+            echo "::error::__version__.py mismatch: py=$PY_VER, tag=$TAG_VER"
+            exit 1
+          fi
+          echo "Python version check passed: $PY_VER"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install qgis-plugin-ci
+        run: pip install qgis-plugin-ci
+
+      - name: Package plugin zip
+        run: |
+          cd plugin
+          zip -r ../terrapulse_${{ steps.version.outputs.VERSION }}.zip \
+            terrapulse/ \
+            -x "*.pyc" -x "*/__pycache__/*" -x "*/.DS_Store"
+          echo "Created: terrapulse_${{ steps.version.outputs.VERSION }}.zip"
+          ls -lh terrapulse_*.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "terrapulse_${{ steps.version.outputs.VERSION }}.zip"
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, 'rc') || contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') }}
+          body: |
+            ## TerraPulse v${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+            1. Download `terrapulse_${{ steps.version.outputs.VERSION }}.zip` below
+            2. In QGIS → Plugins → Manage and Install Plugins → Install from ZIP
+            3. Select the downloaded file and click "Install Plugin"
+
+            Or install directly from the QGIS Plugin Repository:
+            Plugins → Manage and Install Plugins → search "TerraPulse"
+
+            ### Requirements
+            - QGIS ≥ 3.34 LTR
+            - Python ≥ 3.11
+            - Docker Desktop (for local processing)
+            - Free [Copernicus Data Space](https://dataspace.copernicus.eu/) account
+
+      - name: Upload to QGIS Plugin Repository
+        if: ${{ !contains(steps.version.outputs.VERSION, 'alpha') && !contains(steps.version.outputs.VERSION, 'beta') }}
+        env:
+          QGIS_PLUGIN_REPO_TOKEN: ${{ secrets.QGIS_PLUGIN_REPO_TOKEN }}
+        run: |
+          qgis-plugin-ci release ${{ steps.version.outputs.VERSION }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --osgeo-username ${{ secrets.OSGEO_USERNAME }} \
+            --osgeo-password ${{ secrets.OSGEO_PASSWORD }}

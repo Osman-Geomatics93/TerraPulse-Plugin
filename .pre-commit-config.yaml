@@ -1,0 +1,50 @@
+---
+# TerraPulse pre-commit configuration
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(packages|plugin)/
+      - id: ruff-format
+        files: ^(packages|plugin)/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.0
+    hooks:
+      - id: mypy
+        args: [--strict]
+        files: ^packages/terrapulse_core/src/
+        additional_dependencies:
+          - pydantic>=2.7
+          - types-PyYAML
+          - types-requests
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]          # alert if a file > 500 KB is committed
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch=main]
+
+  - repo: local
+    hooks:
+      - id: pytest-core-fast
+        name: pytest (core, fast subset)
+        language: system
+        entry: uv run pytest packages/terrapulse_core/tests -x -q --tb=short
+        pass_filenames: false
+        always_run: false
+        files: ^packages/terrapulse_core/

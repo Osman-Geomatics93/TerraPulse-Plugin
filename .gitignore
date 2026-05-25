@@ -1,0 +1,73 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+pip-wheel-metadata/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ── Testing / tooling ─────────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Claude Code workspace files ───────────────────────────────────────────────
+.claude/
+
+# ── QGIS plugin bundled deps (pip install --target) ───────────────────────────
+# These are installed from pyproject.toml — never commit the vendored wheels.
+plugin/terrapulse/deps/
+
+# ── QGIS compiled resources ───────────────────────────────────────────────────
+plugin/terrapulse/resources_rc.py
+
+# ── ML model weights (large binaries — store in DVC or release assets) ────────
+packages/terrapulse_core/src/terrapulse_core/ml/models/*.pt
+packages/terrapulse_core/src/terrapulse_core/ml/models/*.onnx
+packages/terrapulse_core/src/terrapulse_core/ml/models/*.pkl
+# keep the .gitkeep placeholder
+!packages/terrapulse_core/src/terrapulse_core/ml/models/.gitkeep
+
+# ── Sentinel-1 / output data (never commit raw SAR data) ─────────────────────
+*.SAFE/
+*.zip
+*.zarr/
+*.tif
+*.tiff
+*.nc
+output/
+.cache/
+
+# ── Secrets / credentials ─────────────────────────────────────────────────────
+.env
+.env.*
+secrets.yml
+secrets.yaml
+*credentials*

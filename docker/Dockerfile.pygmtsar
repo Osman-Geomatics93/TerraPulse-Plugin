@@ -1,0 +1,84 @@
+# ============================================================
+# TerraPulse — PyGMTSAR InSAR Processing Container
+# ============================================================
+# Base: Ubuntu 22.04 LTS
+# Includes: GMTSAR, SNAPHU, PyGMTSAR, terrapulse_core
+#
+# Build:
+#   docker build -f docker/Dockerfile.pygmtsar -t terrapulse-pygmtsar:latest .
+#
+# Run (interactive):
+#   docker run --rm -v /data:/data terrapulse-pygmtsar:latest
+#
+# Run (IPC mode, Phase 1):
+#   docker run --rm -i -v /data:/data terrapulse-pygmtsar:latest python -m terrapulse_core.io.engine_server
+# ============================================================
+
+FROM ubuntu:22.04
+
+LABEL maintainer="TerraPulse Contributors"
+LABEL description="TerraPulse PyGMTSAR InSAR processing environment"
+LABEL version="0.1.0"
+
+# --- System dependencies ---
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Build tools
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    # GMTSAR dependencies
+    gmt \
+    gmt-dcw \
+    gmt-gshhg \
+    libgmt-dev \
+    # GDAL
+    gdal-bin \
+    libgdal-dev \
+    python3-gdal \
+    # SNAPHU (phase unwrapping)
+    snaphu \
+    # HDF5 (for MintPy compatibility)
+    libhdf5-dev \
+    # Python
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
+    python3.11-venv \
+    # Clean up
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Set python3.11 as default ---
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# --- Install uv for fast package management ---
+RUN pip install --no-cache-dir uv
+
+# --- Create processing user (never run as root in production) ---
+RUN useradd --create-home --shell /bin/bash terrapulse
+WORKDIR /home/terrapulse
+
+# --- Install terrapulse_core ---
+# Copy only the core package (not the QGIS plugin)
+COPY packages/terrapulse_core /home/terrapulse/terrapulse_core
+RUN cd /home/terrapulse/terrapulse_core && \
+    uv pip install --system ".[openeo]"
+
+# --- Install PyGMTSAR ---
+# PyGMTSAR uses date-based versioning. Pin to latest stable release.
+# NOTE: PyGMTSAR requires GMTSAR to be installed system-wide (done above).
+RUN uv pip install --system "pygmtsar==2024.1.21.post4"
+
+# --- Verify installation ---
+RUN python -c "import terrapulse_core; print('terrapulse_core OK')"
+RUN python -c "import pygmtsar; print('pygmtsar OK')" || echo "WARNING: pygmtsar import failed — check GMTSAR installation"
+
+# --- Engine server entrypoint ---
+COPY docker/engine_server.py /home/terrapulse/engine_server.py
+
+# --- Default: drop to shell for debugging ---
+USER terrapulse
+CMD ["/bin/bash"]
