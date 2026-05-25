@@ -1,4 +1,4 @@
-﻿[general]
+[general]
 name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
