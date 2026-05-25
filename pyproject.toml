@@ -16,10 +16,43 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"   # zarr uses PEP 695 type-param syntax; needs 3.12 parser
 strict = true
 files = ["packages/terrapulse_core/src"]
 exclude = ["tests/"]
+
+# Third-party packages without PEP 561 stubs — ignore rather than fail CI.
+# These are either optional extras (torch, anthropic, mintpy…) or packages
+# that simply don't ship type information (rasterio, affine, zarr…).
+[[tool.mypy.overrides]]
+module = [
+    "affine.*",
+    "anthropic.*",
+    "dask.*",
+    "geopandas.*",
+    "huggingface_hub.*",
+    "mintpy.*",
+    "numpy.*",
+    "openeo.*",
+    "overpy.*",
+    "plotly.*",
+    "pygmtsar.*",
+    "pyogrio.*",
+    "pyproj.*",
+    "pystac.*",
+    "pystac_client.*",
+    "rasterio.*",
+    "scipy.*",
+    "shapely.*",
+    "sklearn.*",
+    "timm.*",
+    "torch.*",
+    "weasyprint.*",
+    "xarray.*",
+    "zarr.*",
+]
+ignore_missing_imports = true
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["packages/terrapulse_core/tests"]
