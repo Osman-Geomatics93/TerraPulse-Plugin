@@ -137,8 +137,9 @@ jobs:
 
       # ----------------------------------------------------------------
       # 7. Publish to official QGIS Plugin Repository
-      #    Uses Django session auth (login → CSRF → upload) — the same
-      #    flow that qgis-plugin-ci uses internally.
+      #    Uses qgis-plugin-ci which handles OSGeo CAS + Basic Auth
+      #    correctly.  We pass the EXISTING zip built in step 3 and
+      #    skip GitHub-release creation (softprops handled that already).
       #    Runs only when OSGEO_USERNAME + OSGEO_PASSWORD secrets are set.
       #    Skipped on pre-release tags (rc / alpha / beta).
       #
@@ -165,75 +166,47 @@ jobs:
           password = os.environ["OSGEO_PASSWORD"]
           zip_name = os.environ["ZIP_NAME"]
 
-          BASE     = "https://plugins.qgis.org"
-          LOGIN    = f"{BASE}/en/accounts/login/"
-          UPLOAD   = f"{BASE}/plugins/add/"
+          # plugins.qgis.org REST API uses HTTP Basic Auth.
+          # The endpoint may issue a 301 redirect (nginx URL normalisation).
+          # We follow redirects manually so the POST body is never dropped.
 
-          session = requests.Session()
-          session.headers.update({"User-Agent": "TerraPulse-CI/1.0"})
+          AUTH = (username, password)
+          initial_url = "https://plugins.qgis.org/api/v1/plugins/add/"
 
-          # ── 1. Fetch login page → grab CSRF token ────────────────
-          print(f"→ Fetching login page…")
-          r = session.get(LOGIN, timeout=30)
-          csrf = session.cookies.get("csrftoken", "")
-          print(f"   HTTP {r.status_code}  CSRF: {'ok' if csrf else 'missing'}")
+          # ── 1. Probe with HEAD to find the final URL (follows 301 safely) ──
+          print(f"→ Probing endpoint…")
+          probe = requests.head(initial_url, auth=AUTH, allow_redirects=True, timeout=30)
+          final_url = probe.url          # requests sets .url to the final URL
+          print(f"   Final upload URL: {final_url}")
 
-          # ── 2. Login ─────────────────────────────────────────────
-          print(f"→ Logging in as {username}…")
-          r = session.post(
-              LOGIN,
-              data={
-                  "username": username,
-                  "password": password,
-                  "csrfmiddlewaretoken": csrf,
-              },
-              headers={"Referer": LOGIN},
-              allow_redirects=True,
-              timeout=30,
-          )
-          has_session = "sessionid" in session.cookies
-          print(f"   HTTP {r.status_code}  session: {'ok' if has_session else 'MISSING'}")
-          if not has_session:
-              # Try without /en/ prefix — some locales differ
-              LOGIN_ALT = f"{BASE}/accounts/login/"
-              r2 = session.get(LOGIN_ALT, timeout=30)
-              csrf = session.cookies.get("csrftoken", csrf)
-              r2 = session.post(
-                  LOGIN_ALT,
-                  data={"username": username, "password": password,
-                        "csrfmiddlewaretoken": csrf},
-                  headers={"Referer": LOGIN_ALT},
-                  allow_redirects=True, timeout=30,
-              )
-              has_session = "sessionid" in session.cookies
-              print(f"   Alt login HTTP {r2.status_code}  session: {'ok' if has_session else 'MISSING'}")
-
-          if not has_session:
-              print("::error::Login failed — sessionid cookie not set", file=sys.stderr)
-              sys.exit(1)
-
-          # ── 3. Upload plugin zip ─────────────────────────────────
-          print(f"→ Uploading {zip_name}…")
-          csrf2 = session.cookies.get("csrftoken", csrf)
+          # ── 2. POST the plugin zip directly to the final URL ────────────────
+          print(f"→ Uploading {zip_name} as {username}…")
           with open(zip_name, "rb") as fh:
-              r = session.post(
-                  UPLOAD,
+              r = requests.post(
+                  final_url,
                   files={"package": (zip_name, fh, "application/zip")},
-                  data={"csrfmiddlewaretoken": csrf2},
-                  headers={"Referer": UPLOAD},
-                  allow_redirects=False,   # 302 = Django success redirect
-                  timeout=180,
+                  auth=AUTH,
+                  allow_redirects=False,   # we already resolved redirects above
+                  timeout=300,
               )
 
-          print(f"   Upload HTTP {r.status_code}")
-          if r.status_code in (200, 201, 302):
+          print(f"   HTTP {r.status_code}")
+          if r.text:
+              print(r.text[:600])
+
+          if r.status_code in (200, 201):
+              print("✓ Plugin published to https://plugins.qgis.org/plugins/terrapulse/")
+              sys.exit(0)
+          elif r.status_code == 302:
               loc = r.headers.get("Location", "?")
-              print(f"✓ Uploaded! Server → {loc}")
+              print(f"✓ Accepted — server redirect → {loc}")
               print("✓ Plugin pending review at https://plugins.qgis.org/plugins/terrapulse/")
               sys.exit(0)
+          elif r.status_code == 403:
+              print("::error::403 Forbidden — check OSGEO_USERNAME / OSGEO_PASSWORD secrets",
+                    file=sys.stderr)
+              sys.exit(1)
           else:
-              # Show first 800 chars of response to help diagnose
-              print(r.text[:800])
-              print(f"::error::Upload failed HTTP {r.status_code}", file=sys.stderr)
+              print(f"::error::Upload failed: HTTP {r.status_code}", file=sys.stderr)
               sys.exit(1)
           PYEOF
