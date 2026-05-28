@@ -1,5 +1,20 @@
 # TerraPulse Changelog
 
+## 0.2.12 (2026-05-29)
+
+### Fixed
+- **"Discover Scenes" button failed for users who installed from plugins.qgis.org.**
+  The button calls `STACClient` in the QGIS process (not in Docker), and QGIS's
+  bundled Python doesn't have `pystac_client` installed — so the click produced
+  `ModuleNotFoundError: No module named 'pystac_client'`. The full `Run InSAR`
+  flow was unaffected because it runs STAC search inside the Docker container.
+
+### Changed
+- Refactored `STACClient` to use plain `requests.post()` against CDSE's HTTP
+  STAC `/search` endpoint instead of `pystac_client`. Same public API,
+  same behaviour, same retry semantics. Removes the need to vendor
+  pystac-client (and its ~8 MB of transitive deps) into the plugin zip.
+
 ## 0.2.11 (2026-05-29)
 
 ### Fixed

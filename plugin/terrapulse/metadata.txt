@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.11
+version=0.2.12
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,13 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.12 (2026-05-29)
+    - Fix "Discover Scenes" button which failed with ModuleNotFoundError
+      for users who installed from plugins.qgis.org. The button calls
+      STACClient in the QGIS process, but QGIS Python doesn't have
+      pystac_client installed. Refactored STACClient to use plain `requests`
+      against CDSE's HTTP STAC API — same behaviour, no extra Python deps.
+
     0.2.11 (2026-05-29)
     - Suppress 4 additional Bandit B105/B107 false positives that blocked
       0.2.10 from the plugins.qgis.org security scan:

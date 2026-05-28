@@ -3,25 +3,32 @@ STAC client for querying Sentinel-1 SLC scenes from the
 Copernicus Data Space Ecosystem (CDSE).
 
 CDSE STAC endpoint: https://catalogue.dataspace.copernicus.eu/stac/
-Collection:         SENTINEL-1
+Collection:         sentinel-1-slc
+
+Implementation note
+-------------------
+This client deliberately does NOT depend on ``pystac-client``. The STAC search
+endpoint is just a JSON HTTP POST, and avoiding pystac-client means the QGIS
+plugin process can call STAC search directly without installing 30+ wheels into
+QGIS's bundled Python. ``requests`` is the only external dependency, and it
+ships with QGIS.
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-import pystac_client
+import requests
 
 from terrapulse_core.stac.models import BBox, SceneStack, SentinelScene
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
-
-    import pystac
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +42,14 @@ _MAX_AREA_KM2 = 25_000.0
 # Retry policy for transient CDSE/STAC errors (502/503/504, connection drops)
 _RETRY_DELAYS_S: tuple[int, ...] = (5, 20, 60)  # 3 attempts after initial try
 _TRANSIENT_HTTP_CODES: frozenset[int] = frozenset({502, 503, 504})
-# Match HTTP error codes that may appear inside pystac_client error messages.
+# Match HTTP error codes that may appear inside error messages.
 _HTTP_CODE_RE = re.compile(r"\b(5\d{2})\b")
+
+# Network timeouts
+_CONNECT_TIMEOUT_S = 15
+_READ_TIMEOUT_S = 60
+# Page size for /search pagination. CDSE caps at 1000; 100 is a fine default.
+_PAGE_LIMIT = 100
 
 
 class STACQueryError(Exception):
@@ -49,12 +62,12 @@ def _is_transient(exc: BaseException) -> bool:
     worth retrying (502/503/504, connection reset, gateway timeout).
     """
     msg = str(exc)
-    # Common CDSE outage signatures
     if "Bad Gateway" in msg or "Gateway Timeout" in msg or "Service Unavailable" in msg:
         return True
     if "Connection reset" in msg or "Connection aborted" in msg or "RemoteDisconnected" in msg:
         return True
-    # HTTP code in the message body (pystac_client wraps requests errors as text)
+    if isinstance(exc, (requests.ConnectionError, requests.Timeout)):
+        return True
     m = _HTTP_CODE_RE.search(msg)
     return bool(m and int(m.group(1)) in _TRANSIENT_HTTP_CODES)
 
@@ -103,24 +116,38 @@ def _with_retry(label: str, fn: Callable[[], Any]) -> Any:
 
 class STACClient:
     """
-    Thin wrapper around pystac-client for CDSE Sentinel-1 SLC queries.
+    CDSE Sentinel-1 SLC STAC search via direct HTTP — no pystac-client dependency.
 
     All heavy I/O (SLC downloads) is NOT done here — this class only
     queries metadata and returns typed ``SentinelScene`` objects.
     """
 
     def __init__(self, catalog_url: str = CDSE_STAC_URL) -> None:
-        self._catalog_url = catalog_url
-        self._client: pystac_client.Client | None = None
+        self._catalog_url = catalog_url.rstrip("/") + "/"
+        self._session: requests.Session | None = None
 
-    def _get_client(self) -> pystac_client.Client:
-        if self._client is None:
-            logger.debug("Opening STAC catalog: %s", self._catalog_url)
-            self._client = _with_retry(
-                "stac.open",
-                lambda: pystac_client.Client.open(self._catalog_url),
-            )
-        return self._client
+    # ------------------------------------------------------------------
+    # Session management
+    # ------------------------------------------------------------------
+
+    def _get_session(self) -> requests.Session:
+        if self._session is None:
+            self._session = requests.Session()
+            self._session.headers.update({
+                "User-Agent": "terrapulse-core/STAC-client",
+                "Accept": "application/json",
+            })
+        return self._session
+
+    def close(self) -> None:
+        if self._session is not None:
+            with contextlib.suppress(Exception):
+                self._session.close()
+            self._session = None
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def search_scenes(
         self,
@@ -134,25 +161,9 @@ class STACClient:
         Query CDSE STAC for Sentinel-1 SLC scenes intersecting ``aoi``
         within the given time window.
 
-        Parameters
-        ----------
-        aoi:
-            WGS-84 bounding box.
-        start_date / end_date:
-            Inclusive time window.
-        orbit_direction:
-            ``"ascending"`` or ``"descending"``.
-        max_scenes:
-            Hard cap on the number of scenes returned.
+        Returns a list of ``SentinelScene`` sorted oldest-first.
 
-        Returns
-        -------
-        List of ``SentinelScene`` objects sorted by acquisition date (oldest first).
-
-        Raises
-        ------
-        STACQueryError
-            If no scenes are found or the query fails.
+        Raises ``STACQueryError`` on network/server errors, or if no scenes match.
         """
         area = aoi.area_km2
         if area > _MAX_AREA_KM2:
@@ -161,37 +172,29 @@ class STACClient:
                 f"{_MAX_AREA_KM2:.0f} km². Reduce your AOI."
             )
         if area > _WARN_AREA_KM2:
-            logger.warning(
-                "AOI area %.0f km² is large. Downloads may be slow.", area
-            )
-
-        client = self._get_client()
+            logger.warning("AOI area %.0f km² is large. Downloads may be slow.", area)
 
         time_range = f"{start_date.isoformat()}Z/{end_date.isoformat()}Z"
         orbit_upper = orbit_direction.upper()  # CDSE stores "ASCENDING" / "DESCENDING"
 
         logger.info(
             "Searching STAC: bbox=%s, time=%s, orbit=%s",
-            aoi.as_list(),
-            time_range,
-            orbit_upper,
+            aoi.as_list(), time_range, orbit_upper,
         )
 
-        # Fetch without server-side query extension (avoids CDSE case-sensitivity
-        # issues and deprecated query-extension support). Filter client-side instead.
+        # Filter client-side for orbit (avoids CDSE query-extension quirks).
         # The whole fetch is wrapped in _with_retry so a transient 502/503/504
         # midway through pagination triggers a clean restart with backoff.
-        def _do_search() -> list[pystac.Item]:
-            search = client.search(
-                collections=[SENTINEL1_COLLECTION],
+        target = max_scenes * 4  # fetch extra for client-side filter headroom
+
+        def _do_search() -> list[dict[str, Any]]:
+            collected: list[dict[str, Any]] = []
+            for item in self._iter_search_items(
                 bbox=aoi.as_list(),
-                datetime=time_range,
-                max_items=max_scenes * 4,  # fetch extra so client-side filter has room
-                sortby="+datetime",
-            )
-            collected: list[pystac.Item] = []
-            for item in search.items():
-                item_orbit = str(item.properties.get("sat:orbit_state", "")).upper()
+                datetime_range=time_range,
+                target_count=target,
+            ):
+                item_orbit = str(item.get("properties", {}).get("sat:orbit_state", "")).upper()
                 if item_orbit and item_orbit != orbit_upper:
                     continue
                 collected.append(item)
@@ -204,7 +207,6 @@ class STACClient:
         except STACQueryError:
             raise
         except BaseException as exc:  # noqa: BLE001
-            # Non-transient errors get a friendly wrap too (strip HTML, etc.)
             raise STACQueryError(_friendly_error(exc)) from exc
 
         if not items:
@@ -228,8 +230,7 @@ class STACClient:
         max_scenes: int = 30,
     ) -> SceneStack:
         """
-        Convenience method: query scenes and wrap in a ``SceneStack``.
-        Picks the most common relative orbit to ensure a coherent stack.
+        Query scenes and wrap them in a ``SceneStack`` of the dominant relative orbit.
         """
         scenes = self.search_scenes(
             aoi=aoi,
@@ -239,7 +240,6 @@ class STACClient:
             max_scenes=max_scenes,
         )
 
-        # Pick dominant relative orbit (most common in results)
         orbit_counts: dict[int, int] = {}
         for s in scenes:
             orbit_counts[s.relative_orbit] = orbit_counts.get(s.relative_orbit, 0) + 1
@@ -256,36 +256,126 @@ class STACClient:
             total_size_bytes=total_bytes,
         )
 
-    @staticmethod
-    def _item_to_scene(item: pystac.Item) -> SentinelScene:
-        """Map a raw pystac Item to a typed SentinelScene."""
-        props = item.properties
+    def iter_scenes(
+        self,
+        aoi: BBox,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> Iterator[SentinelScene]:
+        """Streaming iterator — use when you don't want all scenes in memory."""
+        time_range = f"{start_date.isoformat()}Z/{end_date.isoformat()}Z"
+        for item in self._iter_search_items(
+            bbox=aoi.as_list(),
+            datetime_range=time_range,
+            target_count=None,
+        ):
+            yield self._item_to_scene(item)
 
-        # CDSE uses sat:orbit_state; fall back to unknown
+    # ------------------------------------------------------------------
+    # HTTP search + pagination
+    # ------------------------------------------------------------------
+
+    def _iter_search_items(
+        self,
+        bbox: list[float],
+        datetime_range: str,
+        target_count: int | None,
+    ) -> Iterator[dict[str, Any]]:
+        """
+        Iterate STAC Items from POST /search, following ``rel=next`` links until
+        ``target_count`` items have been yielded or the catalog is exhausted.
+
+        ``target_count=None`` means "iterate forever" (the caller stops early).
+        """
+        session = self._get_session()
+        search_url = f"{self._catalog_url}search"
+
+        body: dict[str, Any] = {
+            "collections": [SENTINEL1_COLLECTION],
+            "bbox": bbox,
+            "datetime": datetime_range,
+            "limit": _PAGE_LIMIT,
+            "sortby": [{"field": "datetime", "direction": "asc"}],
+        }
+
+        yielded = 0
+        method = "POST"
+        url: str | None = search_url
+        next_body: dict[str, Any] | None = body
+
+        while url is not None:
+            if method == "POST":
+                resp = session.post(
+                    url,
+                    json=next_body,
+                    timeout=(_CONNECT_TIMEOUT_S, _READ_TIMEOUT_S),
+                )
+            else:
+                resp = session.get(
+                    url,
+                    timeout=(_CONNECT_TIMEOUT_S, _READ_TIMEOUT_S),
+                )
+
+            if resp.status_code != 200:
+                raise STACQueryError(
+                    f"STAC search returned HTTP {resp.status_code}: {resp.text[:300]}"
+                )
+
+            page = resp.json()
+            for feature in page.get("features", []):
+                yield feature
+                yielded += 1
+                if target_count is not None and yielded >= target_count:
+                    return
+
+            # Follow rel=next link if present (STAC API spec)
+            url, method, next_body = _next_link(page)
+
+    # ------------------------------------------------------------------
+    # Item → SentinelScene mapping
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _item_to_scene(item: dict[str, Any]) -> SentinelScene:
+        """Map a raw STAC Item dict to a typed SentinelScene."""
+        props = item.get("properties", {}) or {}
+
         orbit_dir = str(props.get("sat:orbit_state", "ascending")).lower()
         if orbit_dir not in ("ascending", "descending"):
             orbit_dir = "ascending"
 
-        polarisation = str(props.get("sar:polarizations", ["VV"])[0]).upper()
+        polarisations = props.get("sar:polarizations") or ["VV"]
+        polarisation = str(polarisations[0]).upper() if polarisations else "VV"
         if polarisation not in ("VV", "VH", "VV+VH", "HH", "HV"):
             polarisation = "VV"
 
+        assets_raw = item.get("assets", {}) or {}
         assets = {
-            key: asset.href
-            for key, asset in item.assets.items()
-            if asset.href
+            key: asset.get("href", "")
+            for key, asset in assets_raw.items()
+            if isinstance(asset, dict) and asset.get("href")
         }
 
-        bbox_list = item.bbox or [0.0, 0.0, 0.0, 0.0]
+        bbox_list = item.get("bbox") or [0.0, 0.0, 0.0, 0.0]
+
+        # datetime from properties (ISO-8601) → datetime obj
+        dt_raw = props.get("datetime") or item.get("datetime")
+        try:
+            scene_dt = (
+                datetime.fromisoformat(str(dt_raw).replace("Z", "+00:00"))
+                if dt_raw else datetime.utcnow()
+            )
+        except (TypeError, ValueError):
+            scene_dt = datetime.utcnow()
 
         return SentinelScene(
-            scene_id=item.id,
-            datetime=item.datetime or datetime.utcnow(),
+            scene_id=item.get("id", "unknown"),
+            datetime=scene_dt,
             bbox=BBox(
-                west=bbox_list[0],
-                south=bbox_list[1],
-                east=bbox_list[2],
-                north=bbox_list[3],
+                west=float(bbox_list[0]),
+                south=float(bbox_list[1]),
+                east=float(bbox_list[2]),
+                north=float(bbox_list[3]),
             ),
             orbit_direction=orbit_dir,  # type: ignore[arg-type]
             relative_orbit=int(props.get("sat:relative_orbit", 0)),
@@ -295,20 +385,24 @@ class STACClient:
             estimated_size_bytes=int(props.get("filesize", 0)),
         )
 
-    def iter_scenes(
-        self,
-        aoi: BBox,
-        start_date: datetime,
-        end_date: datetime,
-    ) -> Iterator[SentinelScene]:
-        """Streaming iterator — use when you don't want to load all scenes at once."""
-        client = self._get_client()
-        time_range = f"{start_date.isoformat()}Z/{end_date.isoformat()}Z"
-        search = client.search(
-            collections=[SENTINEL1_COLLECTION],
-            bbox=aoi.as_list(),
-            datetime=time_range,
-            sortby="+datetime",
-        )
-        for item in search.items():
-            yield self._item_to_scene(item)
+
+def _next_link(page: dict[str, Any]) -> tuple[str | None, str, dict[str, Any] | None]:
+    """
+    Extract the next-page URL + method + body from a STAC FeatureCollection.
+
+    STAC API spec: pagination uses a ``links`` entry with ``"rel": "next"``.
+    For POST searches the next link includes ``"method": "POST"`` and a
+    ``"body"`` field with the query to repeat.
+    """
+    for link in page.get("links", []) or []:
+        if not isinstance(link, dict):
+            continue
+        if link.get("rel") != "next":
+            continue
+        href = link.get("href")
+        if not href:
+            continue
+        method = str(link.get("method", "GET")).upper()
+        body = link.get("body") if method == "POST" else None
+        return href, method, body
+    return None, "GET", None
