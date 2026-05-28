@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.8
+version=0.2.9
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,15 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.9 (2026-05-29)
+    - CRITICAL: fix CDSE 401 "invalid_grant" caused by a QgsSettings key
+      mismatch in main_dialog.py. The Settings dialog saves the CDSE password
+      to "terrapulse/cdse_credential" (via SettingsManager) but main_dialog
+      was reading it from "terrapulse/cdse_password" (raw QgsSettings) — a
+      different key that's never written. Result: every InSAR run sent an
+      empty password to CDSE and got rejected. Now uses SettingsManager
+      consistently.
+
     0.2.8 (2026-05-28)
     - STAC client now retries transient CDSE failures (HTTP 502/503/504,
       connection drops) with exponential backoff (5s, 20s, 60s).

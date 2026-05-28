@@ -407,10 +407,16 @@ class MainDialog(QDialog):
             QMessageBox.warning(self, "No AOI", "Please draw or import an Area of Interest first.")
             return
 
-        # Read CDSE credentials from QgsSettings
+        # Read CDSE credentials via SettingsManager — the canonical accessor.
+        # NEVER read these via raw QgsSettings, because the password lives at
+        # key "cdse_credential" (SettingsManager.KEY_CDSE_PASSWORD), not the
+        # intuitive "cdse_password". Using the wrong key silently returns ""
+        # and produces a confusing CDSE 401 "invalid_grant" at runtime.
+        from terrapulse.settings_manager import SettingsManager
+
         settings = QgsSettings()
-        cdse_user = settings.value(f"{_SETTINGS_PREFIX}cdse_username", "", type=str)
-        cdse_pass = settings.value(f"{_SETTINGS_PREFIX}cdse_password", "", type=str)
+        cdse_user = SettingsManager.cdse_username()
+        cdse_pass = SettingsManager.cdse_password()
 
         if not cdse_user or not cdse_pass:
             reply = QMessageBox.question(
@@ -426,9 +432,9 @@ class MainDialog(QDialog):
 
                 dlg = SettingsDialog(parent=self)
                 dlg.exec()
-                # Re-read after settings saved
-                cdse_user = settings.value(f"{_SETTINGS_PREFIX}cdse_username", "", type=str)
-                cdse_pass = settings.value(f"{_SETTINGS_PREFIX}cdse_password", "", type=str)
+                # Re-read after settings saved (via SettingsManager — same reason)
+                cdse_user = SettingsManager.cdse_username()
+                cdse_pass = SettingsManager.cdse_password()
 
         # Output directory
         output_dir_str = settings.value(f"{_SETTINGS_PREFIX}output_dir", "", type=str)

@@ -1,5 +1,19 @@
 # TerraPulse Changelog
 
+## 0.2.9 (2026-05-29)
+
+### Fixed
+- **CRITICAL: CDSE 401 "invalid_grant" on every run.** `main_dialog.py:413,431`
+  read the CDSE password from raw QgsSettings key `terrapulse/cdse_password`,
+  but `SettingsManager.save_all()` writes it to `terrapulse/cdse_credential`
+  (the value of `KEY_CDSE_PASSWORD`). The key mismatch meant `main_dialog`
+  always received an empty password and sent it to the engine, which CDSE
+  rejected as `invalid_grant`. The dialog itself worked (it loads via
+  `SettingsManager.cdse_password()`), which is why the password appeared
+  correct in Settings but the run still failed.
+  Fix: `main_dialog._on_run()` now reads CDSE credentials exclusively via
+  `SettingsManager.cdse_username()` / `.cdse_password()`.
+
 ## 0.2.8 (2026-05-28)
 
 ### Added
