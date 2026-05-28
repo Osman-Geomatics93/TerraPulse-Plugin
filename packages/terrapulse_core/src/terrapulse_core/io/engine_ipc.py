@@ -31,6 +31,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
@@ -383,7 +384,9 @@ class EngineIPCClient:
         if not self.is_docker_available():
             return False
 
-        cmd = self._build_docker_cmd(Path("/tmp"))
+        # Ping doesn't write any output; use the platform temp dir as a
+        # harmless mount target. Avoids hardcoding "/tmp" (Bandit B108).
+        cmd = self._build_docker_cmd(Path(tempfile.gettempdir()))
         ping_msg = IPCMessage(type="ping", data={})
 
         try:

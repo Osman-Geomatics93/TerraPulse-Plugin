@@ -85,8 +85,10 @@ class DeformationClassifier:
                 "Run `terrapulse_core.ml.train.train_default_classifier()` "
                 "or download the model artifact."
             )
+        # Loading a trusted ML model file shipped with the plugin from a path
+        # the user explicitly configured. Not deserializing untrusted input.
         with open(path, "rb") as f:
-            model = pickle.load(f)  # noqa: S301
+            model = pickle.load(f)  # noqa: S301  # nosec B301
         logger.info("Loaded classifier from %s", path)
         return cls(model)
 

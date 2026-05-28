@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.9
+version=0.2.10
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,14 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.10 (2026-05-29)
+    - Pass plugins.qgis.org security scan. Fix the two Bandit medium-severity
+      issues that blocked 0.2.9 from being approved:
+      * engine_ipc.py: use tempfile.gettempdir() instead of hardcoded "/tmp"
+        for the harmless ping-mount target (B108).
+      * ml/classifier.py: add `# nosec B301` to the pickle.load call that
+        loads the trusted plugin-shipped ML model (B301).
+
     0.2.9 (2026-05-29)
     - CRITICAL: fix CDSE 401 "invalid_grant" caused by a QgsSettings key
       mismatch in main_dialog.py. The Settings dialog saves the CDSE password

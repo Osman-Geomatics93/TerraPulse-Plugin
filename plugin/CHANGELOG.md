@@ -1,5 +1,17 @@
 # TerraPulse Changelog
 
+## 0.2.10 (2026-05-29)
+
+### Fixed
+- **plugins.qgis.org security scanner blocked 0.2.9.** Two Bandit medium-severity
+  issues were flagged as critical by the scanner and prevented approval:
+  - `engine_ipc.py:386` — `Path("/tmp")` hardcoded temp directory (Bandit B108).
+    Now uses `tempfile.gettempdir()` for the dummy mount target in `ping()`.
+  - `ml/classifier.py:89` — `pickle.load()` on a model file (Bandit B301).
+    Loading a trusted ML model file shipped with the plugin is intentional;
+    added `# nosec B301` to acknowledge the warning. The previous `# noqa: S301`
+    only suppressed ruff, not Bandit.
+
 ## 0.2.9 (2026-05-29)
 
 ### Fixed
