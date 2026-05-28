@@ -109,8 +109,11 @@ class SettingsDialog(QDialog):
         proc_form.addRow("Max scenes per run:", self._max_scenes)
 
         self._docker_image = QLineEdit()
-        self._docker_image.setPlaceholderText("terrapulse-pygmtsar:latest")
-        self._docker_image.setToolTip("Docker image for local processing engine")
+        self._docker_image.setPlaceholderText("osmanos93/terrapulse-pygmtsar:latest")
+        self._docker_image.setToolTip(
+            "Docker image for the InSAR processing engine.\n"
+            "Default pulls from Docker Hub. Override only if you built a custom image."
+        )
         proc_form.addRow("Docker image tag:", self._docker_image)
 
         self._generate_pdf = QCheckBox("Generate PDF report (requires WeasyPrint)")
@@ -154,7 +157,7 @@ class SettingsDialog(QDialog):
             anthropic_api_key=self._anthropic_key.text().strip(),
             output_dir=self._output_dir.text().strip(),
             max_scenes=self._max_scenes.value(),
-            docker_image=self._docker_image.text().strip() or "terrapulse-pygmtsar:latest",
+            docker_image=self._docker_image.text().strip() or "osmanos93/terrapulse-pygmtsar:latest",
             generate_pdf=self._generate_pdf.isChecked(),
         )
         logger.info("TerraPulse settings saved.")

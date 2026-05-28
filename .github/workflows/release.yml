@@ -53,7 +53,19 @@ jobs:
       # 3. Build QGIS plugin zip
       #    The zip contains a top-level terrapulse/ folder so QGIS can
       #    install it directly via "Install from ZIP".
+      #
+      #    terrapulse_core is vendored INTO the plugin directory so the
+      #    installed plugin is self-contained and importable from QGIS's
+      #    Python without any extra pip install step.
       # ----------------------------------------------------------------
+      - name: Vendor terrapulse_core into plugin
+        run: |
+          # Copy the core package next to the plugin's __init__.py so
+          # `import terrapulse_core` works after QGIS installs the zip.
+          cp -r packages/terrapulse_core/src/terrapulse_core plugin/terrapulse/terrapulse_core
+          echo "✓ Vendored terrapulse_core:"
+          ls plugin/terrapulse/terrapulse_core | head -20
+
       - name: Build QGIS plugin zip
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
@@ -63,7 +75,8 @@ jobs:
             -x "*.pyc" \
             -x "*/__pycache__/*" \
             -x "*/.DS_Store" \
-            -x "*/deps/*" )
+            -x "*/deps/*" \
+            -x "terrapulse/terrapulse_core/tests/*" )
 
           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
           echo "✓ Created: ${ZIP_NAME}"

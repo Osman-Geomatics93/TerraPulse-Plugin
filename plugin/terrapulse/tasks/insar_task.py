@@ -34,8 +34,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Default Docker image name (configurable via settings dialog)
-DEFAULT_DOCKER_IMAGE = "terrapulse-pygmtsar:latest"
+# Default Docker image name (configurable via settings dialog).
+# Points to the public Docker Hub image so users don't need to build locally.
+DEFAULT_DOCKER_IMAGE = "osmanos93/terrapulse-pygmtsar:latest"
 
 
 class InSARTask(QgsTask):
@@ -167,13 +168,26 @@ class InSARTask(QgsTask):
             )
             if not _image_ok:
                 self._error = (
-                    f"Docker image '{self._docker_image}' not found locally. "
-                    f"Build it with: docker build -f docker/Dockerfile.pygmtsar "
-                    f"-t {self._docker_image} ."
+                    f"Docker image '{self._docker_image}' not found locally.\n"
+                    f"Pull it from Docker Hub with:\n"
+                    f"    docker pull {self._docker_image}\n"
+                    f"(or build from source: "
+                    f"docker build -f docker/Dockerfile.pygmtsar -t {self._docker_image} .)"
                 )
                 self._update_recipe(recipe, writer, "failed", self._error)
                 return False
 
+        except ModuleNotFoundError as exc:
+            self._error = (
+                f"Plugin install is broken — could not import {exc.name!r}.\n"
+                "The QGIS plugin zip is missing its core module. "
+                "Reinstall the plugin from a 0.2.4+ release, or copy "
+                "packages/terrapulse_core/src/terrapulse_core/ into the plugin "
+                "install directory and restart QGIS."
+            )
+            logger.exception("[InSARTask %s] Plugin install missing terrapulse_core", self._run_id[:8])
+            self._update_recipe(recipe, writer, "failed", self._error)
+            return False
         except BaseException as exc:  # noqa: BLE001
             self._error = f"Docker pre-check failed: {type(exc).__name__}: {exc}"
             logger.exception("[InSARTask %s] Docker pre-check error", self._run_id[:8])

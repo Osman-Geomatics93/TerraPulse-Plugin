@@ -45,6 +45,12 @@ Thumbs.db
 # These are installed from pyproject.toml — never commit the vendored wheels.
 plugin/terrapulse/deps/
 
+# ── Vendored terrapulse_core copy ─────────────────────────────────────────────
+# release.yml copies packages/terrapulse_core/src/terrapulse_core/ into the
+# plugin directory at release time so the QGIS plugin zip is self-contained.
+# Never commit the copy — the canonical source lives under packages/.
+plugin/terrapulse/terrapulse_core/
+
 # ── QGIS compiled resources ───────────────────────────────────────────────────
 plugin/terrapulse/resources_rc.py
 

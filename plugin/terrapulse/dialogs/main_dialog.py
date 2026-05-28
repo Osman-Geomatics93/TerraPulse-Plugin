@@ -457,6 +457,7 @@ class MainDialog(QDialog):
 
         # Import task
         from terrapulse.tasks.insar_task import InSARTask
+        from terrapulse.settings_manager import SettingsManager
 
         task = InSARTask(
             aoi_wkt=self._aoi_wkt,
@@ -465,9 +466,10 @@ class MainDialog(QDialog):
             output_dir=output_dir,
             mode=mode,
             orbit_direction=orbit,
-            max_scenes=30,
+            max_scenes=SettingsManager.max_scenes(),
             cdse_username=cdse_user,
             cdse_password=cdse_pass,
+            docker_image=SettingsManager.docker_image(),
         )
         task.run_complete.connect(self._on_run_complete)
         task.progress_message.connect(self._on_progress_message)
