@@ -31,7 +31,7 @@ confidential until a coordinated disclosure is made.
 
 Send a report directly to the maintainer:
 
-**mohamed.fawzy98@hotmail.com**
+**osmangeomatics93@gmail.com**
 
 Include as much detail as possible:
 - A clear description of the vulnerability.

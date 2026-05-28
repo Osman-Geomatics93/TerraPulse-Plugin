@@ -5,7 +5,7 @@ qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
 version=0.2.4
 author=OSMAN IBRAHIM
-email=mohamed.fawzy98@hotmail.com
+email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
     select a time window, and receive an interpreted deformation map with risk attribution —
     no SAR or InSAR expertise required. Powered by Sentinel-1 SBAS-InSAR, scikit-learn

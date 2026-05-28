@@ -334,6 +334,6 @@ Releases are cut by maintainers. The flow is:
 - **General questions / ideas** → [GitHub Discussions](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/discussions)
 - **Bugs** → [Issue tracker](https://github.com/Osman-Geomatics93/TerraPulse-Plugin/issues)
 - **Security** → see [SECURITY.md](SECURITY.md)
-- **Direct contact** → mohamed.fawzy98@hotmail.com (response within ~3 business days)
+- **Direct contact** → osmangeomatics93@gmail.com (response within ~3 business days)
 
 Thanks for making TerraPulse better.

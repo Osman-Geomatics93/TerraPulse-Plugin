@@ -10,7 +10,7 @@ its terms.
 ## Reporting
 
 Report unacceptable behavior to the project maintainer at
-**mohamed.fawzy98@hotmail.com**. All reports are kept confidential and will be
+**osmangeomatics93@gmail.com**. All reports are kept confidential and will be
 reviewed and acted on within a reasonable timeframe.
 
 ## Scope
