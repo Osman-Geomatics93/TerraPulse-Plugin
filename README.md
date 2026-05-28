@@ -198,6 +198,12 @@ flowchart LR
 
 ## 📦 Installation
 
+> 🐳 **Heads up:** TerraPulse needs Docker Desktop running with the engine image. The plugin auto-pulls it on first use, but pre-pulling saves 5 minutes on your first run:
+> ```bash
+> docker pull osmanos93/terrapulse-pygmtsar:latest
+> ```
+> [More on the Docker engine ↓](#-docker-engine)
+
 ### Option 1 — QGIS Plugin Repository *(recommended)*
 
 ```
@@ -243,23 +249,76 @@ ln -s $(pwd)/plugin/terrapulse \
 
 ## 🐳 Docker Engine
 
-The InSAR processing engine runs inside a pre-built Docker image — **no GMTSAR, PyGMTSAR, or SNAPHU installation** required on your machine.
+The InSAR processing engine runs inside a pre-built Docker image — **no GMTSAR, PyGMTSAR, or SNAPHU installation** required on your machine. The plugin spawns the container for you on every run.
+
+<div align="center">
+
+[![Docker Pulls](https://img.shields.io/docker/pulls/osmanos93/terrapulse-pygmtsar?label=pulls&logo=docker&logoColor=white&color=2496ED)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar)
+[![Image Size](https://img.shields.io/docker/image-size/osmanos93/terrapulse-pygmtsar/latest?label=size&logo=docker&logoColor=white&color=2496ED)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar/tags)
+[![Docker Hub Page](https://img.shields.io/badge/Docker%20Hub-osmanos93%2Fterrapulse--pygmtsar-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar)
+
+</div>
+
+### ⚡ One-line install (recommended)
+
+Pre-pull the image **before your first InSAR run** so it's already on disk:
 
 ```bash
-# Pull the latest engine image
 docker pull osmanos93/terrapulse-pygmtsar:latest
+```
 
-# Verify it's working
+> 💡 **You can skip this** — the plugin auto-pulls the image on the first run if it isn't local yet. Pre-pulling just removes the ~5 minute one-time download from your first analysis.
+
+### ✅ Verify the image works
+
+```bash
 docker run --rm osmanos93/terrapulse-pygmtsar:latest \
     python -c "import pygmtsar, terrapulse_core; print('✓ Engine ready')"
 ```
 
-| Image tag | Size | Includes |
-|-----------|------|---------|
-| `osmanos93/terrapulse-pygmtsar:latest` | 928 MB | Ubuntu 22.04 · GMT 6.3 · SNAPHU 2.0 · PyGMTSAR 2024 · Python 3.11 |
-| `osmanos93/terrapulse-pygmtsar:0.2.3` | 928 MB | Same, pinned version |
+Expected output: `✓ Engine ready`
 
-> 🔗 **Docker Hub:** https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar
+### 📦 Available tags
+
+| Tag | Recommended for | Notes |
+|-----|-----------------|-------|
+| **`osmanos93/terrapulse-pygmtsar:latest`** | Most users | Tracks the newest stable engine release |
+| `osmanos93/terrapulse-pygmtsar:0.2.1` | Reproducible pipelines | Pinned version — won't change |
+
+<details>
+<summary><b>🔧 What's inside the image</b> (click to expand)</summary>
+
+<br/>
+
+| Component | Version | Role |
+|-----------|---------|------|
+| Ubuntu | 22.04 LTS | Base OS |
+| Python | 3.11 | Runtime |
+| GMT | 6.3 | Grid mapping toolkit |
+| GMTSAR | 6.5 | SAR processing primitives |
+| SNAPHU | 2.0.6 | Phase unwrapping |
+| PyGMTSAR | 2024.1.21.post4 | Python InSAR wrapper |
+| terrapulse_core | matches plugin version | TerraPulse engine logic |
+| GDAL | 3.4+ | Raster I/O |
+
+Total image size: **~928 MB compressed**, ~3.8 GB on disk after pull.
+
+</details>
+
+### 🛠️ Useful Docker commands
+
+| Command | What it does |
+|---------|--------------|
+| `docker pull osmanos93/terrapulse-pygmtsar:latest` | Update to the newest image |
+| `docker images osmanos93/terrapulse-pygmtsar` | See which versions are on your machine |
+| `docker rmi osmanos93/terrapulse-pygmtsar:latest` | Remove (frees ~3.8 GB) |
+| `docker system df` | See total Docker disk usage |
+
+### 🔍 Where it appears in Docker Desktop
+
+After `docker pull`, open Docker Desktop → **Images** → search **terrapulse** → you'll see the image with size, tag, and a Run button. **Don't click Run from Docker Desktop manually** — the plugin spawns the container with the correct volume mounts and IPC flags. Use Docker Desktop only to inspect, update, or delete the image.
+
+> 🔗 **Docker Hub page:** https://hub.docker.com/r/osmanos93/terrapulse-pygmtsar (no login required for pulls)
 
 ---
 
