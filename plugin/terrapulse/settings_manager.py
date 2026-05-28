@@ -23,8 +23,8 @@ SETTINGS_PREFIX = "terrapulse/"
 # Setting key constants — these are QgsSettings key *names*, not secrets.
 # The pragma comments suppress detect-secrets false positives.
 KEY_CDSE_USERNAME = "cdse_username"
-KEY_CDSE_PASSWORD = "cdse_credential"  # pragma: allowlist secret
-KEY_ANTHROPIC_KEY = "anthropic_key"  # pragma: allowlist secret
+KEY_CDSE_PASSWORD = "cdse_credential"  # pragma: allowlist secret  # nosec B105
+KEY_ANTHROPIC_KEY = "anthropic_key"  # pragma: allowlist secret  # nosec B105
 KEY_OUTPUT_DIR = "output_dir"
 KEY_MAX_SCENES = "max_scenes"
 KEY_PREFERRED_ORBIT = "preferred_orbit"

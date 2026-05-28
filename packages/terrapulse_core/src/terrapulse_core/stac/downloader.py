@@ -38,8 +38,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# CDSE OAuth2 ROPC endpoint
-_TOKEN_URL = (
+# CDSE OAuth2 ROPC endpoint (it's a public URL, not a secret — Bandit B105
+# false-positive because the string contains "token")
+_TOKEN_URL = (  # nosec B105
     "https://identity.dataspace.copernicus.eu"
     "/auth/realms/CDSE/protocol/openid-connect/token"
 )

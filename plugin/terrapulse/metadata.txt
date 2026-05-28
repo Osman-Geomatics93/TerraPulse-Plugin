@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.10
+version=0.2.11
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,16 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.11 (2026-05-29)
+    - Suppress 4 additional Bandit B105/B107 false positives that blocked
+      0.2.10 from the plugins.qgis.org security scan:
+      * settings_manager.py: KEY_CDSE_PASSWORD/KEY_ANTHROPIC_KEY constants
+        (the strings are QgsSettings KEY NAMES, not credentials)
+      * insar_task.py / engine_ipc.py: cdse_password parameter default ""
+        (it's an unset-by-default placeholder, not a real password)
+      * downloader.py: _TOKEN_URL is the public CDSE OAuth endpoint URL,
+        flagged because it contains the word "token"
+
     0.2.10 (2026-05-29)
     - Pass plugins.qgis.org security scan. Fix the two Bandit medium-severity
       issues that blocked 0.2.9 from being approved:

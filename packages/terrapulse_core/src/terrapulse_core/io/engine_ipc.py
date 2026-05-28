@@ -150,7 +150,7 @@ class EngineIPCClient:
     # Public API
     # ------------------------------------------------------------------
 
-    def run(
+    def run(  # noqa: PLR0913  # nosec B107
         self,
         aoi_wkt: str,
         start_date: datetime,
@@ -160,7 +160,7 @@ class EngineIPCClient:
         orbit_direction: str = "ascending",
         max_scenes: int = 30,
         cdse_username: str = "",
-        cdse_password: str = "",
+        cdse_password: str = "",  # nosec B107
         progress_cb: ProgressCallback | None = None,
     ) -> dict[str, object]:
         """

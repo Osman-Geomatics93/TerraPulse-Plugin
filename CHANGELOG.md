@@ -1,5 +1,19 @@
 # TerraPulse Changelog
 
+## 0.2.11 (2026-05-29)
+
+### Fixed
+- **0.2.10 was also blocked by plugins.qgis.org security scan.** Four additional
+  Bandit B105/B107 ("hardcoded password") false positives needed suppression:
+  - `settings_manager.py:26-27` — `KEY_CDSE_PASSWORD = "cdse_credential"` and
+    `KEY_ANTHROPIC_KEY = "anthropic_key"` are QgsSettings KEY NAMES, not credentials.
+  - `insar_task.py:60` / `engine_ipc.py:153` — function signatures with
+    `cdse_password: str = ""` default. The empty string is a placeholder for
+    "not configured", not a real password.
+  - `downloader.py:43` — `_TOKEN_URL` is the public CDSE OAuth endpoint URL.
+    Bandit flagged it because the URL contains the word "token".
+  Added `# nosec B105` / `# nosec B107` comments where appropriate.
+
 ## 0.2.10 (2026-05-29)
 
 ### Fixed

@@ -57,7 +57,7 @@ class InSARTask(QgsTask):
     run_complete = pyqtSignal(bool, str)  # (success, run_id)
     progress_message = pyqtSignal(str)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913  # nosec B107
         self,
         aoi_wkt: str,
         start_date: datetime,
@@ -67,7 +67,7 @@ class InSARTask(QgsTask):
         orbit_direction: str = "ascending",
         max_scenes: int = 30,
         cdse_username: str = "",
-        cdse_password: str = "",
+        cdse_password: str = "",  # nosec B107
         docker_image: str = DEFAULT_DOCKER_IMAGE,
     ) -> None:
         super().__init__(
