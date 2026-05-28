@@ -252,3 +252,30 @@ jobs:
             --osgeo-password "${OSGEO_PASSWORD}" \
             2>&1
           echo "✓ Submitted to https://plugins.qgis.org/plugins/terrapulse/"
+
+      # ----------------------------------------------------------------
+      # 8. Clean up duplicate dot-named zip that qgis-plugin-ci uploads
+      #    to the GitHub release as a side-effect of `release`.
+      #    We already publish `terrapulse_<ver>.zip` (underscore-named)
+      #    in step 6; qgis-plugin-ci uploads `terrapulse.<ver>.zip`
+      #    (dot-named) on top, creating a confusing duplicate on the
+      #    release page. Delete the dot-named one so each release page
+      #    shows exactly one plugin zip + one wheel + source archives.
+      # ----------------------------------------------------------------
+      - name: Remove duplicate plugin zip uploaded by qgis-plugin-ci
+        if: |
+          always() &&
+          env.OSGEO_USERNAME != '' &&
+          !contains(steps.version.outputs.VERSION, 'rc') &&
+          !contains(steps.version.outputs.VERSION, 'alpha') &&
+          !contains(steps.version.outputs.VERSION, 'beta')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OSGEO_USERNAME: ${{ secrets.OSGEO_USERNAME }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          ASSET="terrapulse.${VERSION}.zip"
+          echo "→ Removing duplicate ${ASSET} (kept terrapulse_${VERSION}.zip)…"
+          gh release delete-asset "${VERSION}" "${ASSET}" \
+            --yes --repo "$GITHUB_REPOSITORY" 2>/dev/null && \
+            echo "   ✓ deleted" || echo "   not present (OK)"
