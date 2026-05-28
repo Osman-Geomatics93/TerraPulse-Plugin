@@ -24,6 +24,7 @@ Thread safety:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -361,10 +362,8 @@ class EngineIPCClient:
             # in the QGIS log after a failed or early-exit run.
             for _pipe in (self._proc.stdin, self._proc.stdout, self._proc.stderr):
                 if _pipe is not None:
-                    try:
+                    with contextlib.suppress(Exception):
                         _pipe.close()
-                    except Exception:
-                        pass
             if ret not in (0, None) and result.get("success"):
                 # Process failed after emitting a result — treat as warning
                 result["warnings"] = list(result.get("warnings", [])) + [
