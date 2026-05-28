@@ -8,7 +8,7 @@ The pyproject.toml ``version`` field should always match ``__version__``.
 from __future__ import annotations
 
 #: Public release version (SemVer)
-__version__: str = "0.2.12"
+__version__: str = "0.2.13"
 
 #: Minimum QGIS version required by the plugin
 QGIS_MIN_VERSION: str = "3.34"

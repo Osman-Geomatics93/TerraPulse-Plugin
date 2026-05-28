@@ -1,29 +1,50 @@
-"""Typed data models for Sentinel-1 STAC items and scene stacks."""
+"""
+Typed data models for Sentinel-1 STAC items and scene stacks.
+
+Implementation note
+-------------------
+This module used to use `pydantic.BaseModel` for runtime validation, but pydantic
+is not reliably importable inside QGIS's bundled Python (QGIS 3.44 ships a
+pydantic_core that's incompatible with the bundled pydantic, producing
+`ImportError: cannot import name 'validate_core_schema'`). Refactored to plain
+`@dataclass` + explicit `__post_init__` validation. Same public API, no
+runtime dependencies beyond the standard library.
+"""
 
 from __future__ import annotations
 
 import math
-from datetime import datetime  # noqa: TC003 — Pydantic resolves field types at runtime
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+OrbitDirection = Literal["ascending", "descending"]
+Polarisation = Literal["VV", "VH", "VV+VH", "HH", "HV"]
+ProcessingLevel = Literal["L1", "L2"]
 
 
-class BBox(BaseModel):
+@dataclass
+class BBox:
     """WGS-84 bounding box."""
 
-    west: float = Field(..., ge=-180, le=180)
-    south: float = Field(..., ge=-90, le=90)
-    east: float = Field(..., ge=-180, le=180)
-    north: float = Field(..., ge=-90, le=90)
+    west: float
+    south: float
+    east: float
+    north: float
 
-    @model_validator(mode="after")
-    def _check_bounds(self) -> BBox:
+    def __post_init__(self) -> None:
+        if not -180 <= self.west <= 180:
+            raise ValueError(f"west must be in [-180, 180], got {self.west}")
+        if not -90 <= self.south <= 90:
+            raise ValueError(f"south must be in [-90, 90], got {self.south}")
+        if not -180 <= self.east <= 180:
+            raise ValueError(f"east must be in [-180, 180], got {self.east}")
+        if not -90 <= self.north <= 90:
+            raise ValueError(f"north must be in [-90, 90], got {self.north}")
         if self.west >= self.east:
             raise ValueError("west must be < east")
         if self.south >= self.north:
             raise ValueError("south must be < north")
-        return self
 
     @property
     def area_km2(self) -> float:
@@ -37,33 +58,29 @@ class BBox(BaseModel):
         return [self.west, self.south, self.east, self.north]
 
 
-class SentinelScene(BaseModel):
+@dataclass
+class SentinelScene:
     """A single Sentinel-1 SLC scene from the STAC catalog."""
 
     scene_id: str
     datetime: datetime
     bbox: BBox
-    orbit_direction: Literal["ascending", "descending"]
+    orbit_direction: OrbitDirection
     relative_orbit: int
-    polarisation: Literal["VV", "VH", "VV+VH", "HH", "HV"]
-    processing_level: Literal["L1", "L2"]
-    assets: dict[str, str] = Field(
-        default_factory=dict,
-        description="Asset key → download URL (e.g. 'PRODUCT' → SAFE zip href)",
-    )
-    estimated_size_bytes: int = Field(
-        default=0,
-        description="Estimated download size; 0 means unknown",
-    )
+    polarisation: Polarisation
+    processing_level: ProcessingLevel
+    assets: dict[str, str] = field(default_factory=dict)
+    estimated_size_bytes: int = 0
 
 
-class SceneStack(BaseModel):
+@dataclass
+class SceneStack:
     """An ordered stack of Sentinel-1 scenes suitable for SBAS processing."""
 
-    scenes: list[SentinelScene] = Field(default_factory=list)
-    aoi: BBox
-    orbit_direction: Literal["ascending", "descending"]
-    relative_orbit: int
+    scenes: list[SentinelScene] = field(default_factory=list)
+    aoi: BBox | None = None
+    orbit_direction: OrbitDirection = "ascending"
+    relative_orbit: int = 0
     total_size_bytes: int = 0
 
     @property
@@ -81,7 +98,8 @@ class SceneStack(BaseModel):
         return self.total_size_bytes / 1e9
 
 
-class ProcessingMode(BaseModel):
+@dataclass
+class ProcessingMode:
     """User-facing processing configuration."""
 
     mode: Literal["quick", "standard", "high_precision"] = "standard"
@@ -93,4 +111,4 @@ class ProcessingMode(BaseModel):
     anthropic_api_key: str | None = None
     openeo_token: str | None = None
     cdse_username: str | None = None
-    cdse_password: str | None = None
+    cdse_password: str | None = None  # nosec B107

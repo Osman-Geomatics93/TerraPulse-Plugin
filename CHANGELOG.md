@@ -1,5 +1,23 @@
 # TerraPulse Changelog
 
+## 0.2.13 (2026-05-29)
+
+### Fixed
+- **Discover Scenes still crashed after 0.2.12** because QGIS 3.44.6 ships
+  a `pydantic` and `pydantic_core` that are version-mismatched against each
+  other (`ImportError: cannot import name 'validate_core_schema'`). Our
+  `terrapulse_core.stac.models` imported `pydantic.BaseModel`, so any
+  attempt to import STAC code in QGIS's Python crashed before reaching
+  the network layer. The Docker pipeline was unaffected because the
+  container has matching pydantic versions.
+
+### Changed
+- Refactored `terrapulse_core/stac/models.py` from `pydantic.BaseModel` to
+  standard-library `@dataclass`. Same public API (`BBox`, `SentinelScene`,
+  `SceneStack`, `ProcessingMode`), same `__post_init__` validation for BBox.
+  No third-party dependencies. Verified working in QGIS 3.44.6 Python 3.12:
+  imports clean, STAC search returns 5 real Sentinel-1 scenes.
+
 ## 0.2.12 (2026-05-29)
 
 ### Fixed

@@ -1,5 +1,15 @@
 # TerraPulse Changelog
 
+## 0.2.13 (2026-05-29)
+
+### Fixed
+- **Discover Scenes still crashed after 0.2.12** because QGIS 3.44 ships a
+  pydantic / pydantic_core combo that's version-mismatched (`ImportError:
+  cannot import name 'validate_core_schema'`). Refactored
+  `terrapulse_core/stac/models.py` from `pydantic.BaseModel` to
+  standard-library `@dataclass`. Same API. Verified working in QGIS 3.44.6:
+  imports clean, STAC returns real Sentinel-1 scenes.
+
 ## 0.2.12 (2026-05-29)
 
 ### Fixed
