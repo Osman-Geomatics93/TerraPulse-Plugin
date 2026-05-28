@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.7
+version=0.2.8
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,13 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.8 (2026-05-28)
+    - STAC client now retries transient CDSE failures (HTTP 502/503/504,
+      connection drops) with exponential backoff (5s, 20s, 60s).
+    - Strip CDSE's nginx HTML error pages from user-facing error messages:
+      instead of dumping <html><head><title>502 Bad Gateway... the dialog
+      now shows "Copernicus Data Space is temporarily unavailable (HTTP 502)".
+
     0.2.7 (2026-05-28)
     - engine_ipc: explicitly close subprocess stdin/stdout/stderr after the
       Docker engine exits, instead of leaving them for the Python garbage

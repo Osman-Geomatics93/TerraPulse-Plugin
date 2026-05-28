@@ -1,5 +1,18 @@
 # TerraPulse Changelog
 
+## 0.2.8 (2026-05-28)
+
+### Added
+- STAC client retries transient CDSE failures (HTTP 502/503/504, connection
+  resets, gateway timeouts) with exponential backoff: 5s, 20s, 60s. Avoids
+  spurious run failures during short CDSE outages.
+
+### Fixed
+- CDSE nginx HTML error pages are now parsed and replaced with a clean
+  one-line message in the UI: instead of dumping
+  `<html><head><title>502 Bad Gateway...` the dialog shows
+  `Copernicus Data Space is temporarily unavailable (HTTP 502). ...`
+
 ## 0.2.7 (2026-05-28)
 
 ### Fixed
