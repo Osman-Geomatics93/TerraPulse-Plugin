@@ -1,5 +1,13 @@
 # TerraPulse Changelog
 
+## 0.2.7 (2026-05-28)
+
+### Fixed
+- `EngineIPCClient.run()` now explicitly closes the subprocess's stdin/stdout/stderr
+  pipes in its `finally:` block, instead of leaving them for Python's garbage
+  collector. Silences `ResourceWarning: unclosed file <_io.TextIOWrapper>`
+  messages that appeared in QGIS logs after failed or early-exit InSAR runs.
+
 ## 0.2.6 (2026-05-28)
 
 ### Fixed

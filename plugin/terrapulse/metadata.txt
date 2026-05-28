@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.6
+version=0.2.7
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,12 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.7 (2026-05-28)
+    - engine_ipc: explicitly close subprocess stdin/stdout/stderr after the
+      Docker engine exits, instead of leaving them for the Python garbage
+      collector. Silences ResourceWarning: unclosed file <_io.TextIOWrapper>
+      that appeared in QGIS logs after every failed/early-exit InSAR run.
+
     0.2.6 (2026-05-28)
     - Strip __pycache__ from vendored terrapulse_core before qgis-plugin-ci
       packaging. The earlier "Validate __version__.py" workflow step imports

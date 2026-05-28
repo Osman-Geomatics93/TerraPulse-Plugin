@@ -356,6 +356,15 @@ class EngineIPCClient:
                 ret = -1
 
             stderr_thread.join(timeout=5)
+            # Explicitly close subprocess pipes so the GC doesn't have to.
+            # Avoids ResourceWarning: unclosed file <_io.TextIOWrapper ...>
+            # in the QGIS log after a failed or early-exit run.
+            for _pipe in (self._proc.stdin, self._proc.stdout, self._proc.stderr):
+                if _pipe is not None:
+                    try:
+                        _pipe.close()
+                    except Exception:
+                        pass
             if ret not in (0, None) and result.get("success"):
                 # Process failed after emitting a result — treat as warning
                 result["warnings"] = list(result.get("warnings", [])) + [
