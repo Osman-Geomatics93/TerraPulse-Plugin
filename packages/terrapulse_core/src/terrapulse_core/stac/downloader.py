@@ -11,7 +11,7 @@ Download URLs come from SentinelScene.assets["PRODUCT"] href strings.
 
 Example usage (inside engine_server.py)::
 
-    auth = CDSEAuth(username="user@email.com", password="secret")
+    auth = CDSEAuth(username="user@email.com", password=os.environ["CDSE_PW"])
     token = auth.get_token()
     dl = CDSEDownloader()
     zip_path = dl.download_scene(

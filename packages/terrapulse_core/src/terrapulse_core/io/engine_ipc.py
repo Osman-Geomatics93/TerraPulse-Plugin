@@ -128,7 +128,7 @@ class EngineIPCClient:
             orbit_direction="ascending",
             max_scenes=24,
             cdse_username="user@email.com",
-            cdse_password="secret",
+            cdse_password=os.environ["CDSE_PW"],
             output_dir=Path("/data/output/run_001"),
             progress_cb=lambda p: task.setProgress(p["percent"]),
         )

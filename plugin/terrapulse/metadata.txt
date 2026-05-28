@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.13
+version=0.2.14
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,13 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.14 (2026-05-29)
+    - Remove the last plugins.qgis.org security-scan blocker: detect-secrets
+      was flagging `cdse_password="secret"` in two docstring usage examples
+      (engine_ipc.py and downloader.py) as a "Secret Keyword". Replaced the
+      placeholder with `os.environ["CDSE_PW"]` so the docstring stays valid
+      Python and detect-secrets has nothing to flag. Local scan: 0 findings.
+
     0.2.13 (2026-05-29)
     - Fix Discover Scenes crash on QGIS 3.44: the bundled pydantic and
       pydantic_core are version-mismatched ("ImportError: cannot import

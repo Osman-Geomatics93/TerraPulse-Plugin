@@ -1,5 +1,14 @@
 # TerraPulse Changelog
 
+## 0.2.14 (2026-05-29)
+
+### Fixed
+- **Clear the last plugins.qgis.org security-scan critical finding.**
+  detect-secrets was flagging `cdse_password="secret"` in two docstring
+  examples (engine_ipc.py:131 and downloader.py:14) as a "Secret Keyword".
+  Replaced with `os.environ["CDSE_PW"]` placeholder. Scan now clean:
+  Bandit 0, detect-secrets 0, 241 tests pass.
+
 ## 0.2.13 (2026-05-29)
 
 ### Fixed
