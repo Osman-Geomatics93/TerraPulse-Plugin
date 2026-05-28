@@ -1,5 +1,17 @@
 # TerraPulse Changelog
 
+## 0.2.6 (2026-05-28)
+
+### Fixed
+- **Release workflow:** plugins.qgis.org rejected the 0.2.5 upload with
+  `Fault 1: 'For security reasons, zip file cannot contain .pyc file'`.
+  The earlier `Validate __version__.py` workflow step imports `terrapulse_core`
+  via `python -c "..."`, which writes `__pycache__/*.pyc` into the source tree.
+  The subsequent `cp -r` step copies those `.pyc` files into the vendored
+  directory, and qgis-plugin-ci then includes them in the upload.
+  release.yml now scrubs `__pycache__/` and `*.pyc` from the vendored copy
+  before staging it for git ls-files.
+
 ## 0.2.5 (2026-05-28)
 
 ### Fixed

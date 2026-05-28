@@ -63,6 +63,13 @@ jobs:
           # Copy the core package next to the plugin's __init__.py so
           # `import terrapulse_core` works after QGIS installs the zip.
           cp -r packages/terrapulse_core/src/terrapulse_core plugin/terrapulse/terrapulse_core
+          # Earlier "Validate __version__.py" step imports terrapulse_core
+          # which creates __pycache__/*.pyc in the source tree. Those get
+          # copied by cp -r above. plugins.qgis.org rejects any upload that
+          # contains .pyc files ("For security reasons..."), so scrub them
+          # from the vendored copy before staging.
+          find plugin/terrapulse/terrapulse_core -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+          find plugin/terrapulse/terrapulse_core -type f -name "*.pyc" -delete
           # qgis-plugin-ci enumerates files via `git ls-files`, which ignores
           # untracked + gitignored paths. The vendored copy is gitignored on
           # purpose (canonical source lives under packages/), so we stage it
@@ -71,8 +78,10 @@ jobs:
           git -c user.email=ci@noreply -c user.name=ci add -f plugin/terrapulse/terrapulse_core
           echo "✓ Vendored terrapulse_core and staged for packaging:"
           ls plugin/terrapulse/terrapulse_core | head -20
-          echo "--- git ls-files (sanity check) ---"
-          git ls-files plugin/terrapulse/terrapulse_core | head -10
+          echo "--- staged file count (sanity check) ---"
+          git ls-files plugin/terrapulse/terrapulse_core | wc -l
+          echo "--- .pyc files staged (must be 0) ---"
+          git ls-files plugin/terrapulse/terrapulse_core | grep -c "\.pyc$" || echo "0"
 
       - name: Build QGIS plugin zip
         run: |

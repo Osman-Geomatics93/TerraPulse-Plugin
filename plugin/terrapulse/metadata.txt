@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.5
+version=0.2.6
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,13 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.6 (2026-05-28)
+    - Strip __pycache__ from vendored terrapulse_core before qgis-plugin-ci
+      packaging. The earlier "Validate __version__.py" workflow step imports
+      terrapulse_core and creates .pyc files; cp -r copied them into the
+      vendored directory; plugins.qgis.org rejected the upload with
+      "For security reasons, zip file cannot contain .pyc file".
+
     0.2.5 (2026-05-28)
     - Fix release workflow: qgis-plugin-ci uses git ls-files for packaging, so
       the gitignored vendored terrapulse_core copy was excluded from the zip
