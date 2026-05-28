@@ -3,7 +3,7 @@ name=TerraPulse
 qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=AI-powered ground deformation and subsidence intelligence using Sentinel-1 InSAR
-version=0.2.4
+version=0.2.5
 author=OSMAN IBRAHIM
 email=osmangeomatics93@gmail.com
 about=TerraPulse lets planners, engineers, and NGO workers draw an Area of Interest in QGIS,
@@ -43,6 +43,13 @@ server=False
 hasProcessingProvider=False
 
 changelog=
+    0.2.5 (2026-05-28)
+    - Fix release workflow: qgis-plugin-ci uses git ls-files for packaging, so
+      the gitignored vendored terrapulse_core copy was excluded from the zip
+      uploaded to plugins.qgis.org (the GitHub release zip was already correct).
+      release.yml now runs `git add -f` on the vendored directory so it appears
+      in git ls-files during CI builds.
+
     0.2.4 (2026-05-28)
     - Fix critical packaging bug: terrapulse_core was missing from the released
       QGIS plugin zip, causing ModuleNotFoundError on every InSAR run

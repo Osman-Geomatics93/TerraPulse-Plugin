@@ -1,5 +1,18 @@
 # TerraPulse Changelog
 
+## 0.2.5 (2026-05-28)
+
+### Fixed
+- **Release workflow:** `qgis-plugin-ci` enumerates files via `git ls-files`,
+  which skips untracked and gitignored paths. The vendored `terrapulse_core/`
+  copy added in 0.2.4 is gitignored on purpose (canonical source lives under
+  `packages/`), so the zip uploaded to plugins.qgis.org by qgis-plugin-ci did
+  not include it — leading to the same `ModuleNotFoundError` 0.2.4 was meant
+  to fix. The GitHub release zip was unaffected.
+- `release.yml` now runs `git add -f plugin/terrapulse/terrapulse_core` after
+  the vendor step so the files appear in `git ls-files` for the CI build only.
+  Nothing is committed — the runner is ephemeral.
+
 ## 0.2.4 (2026-05-28)
 
 ### Fixed
